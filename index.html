@@ -1,0 +1,1892 @@
+<!doctype html>
+<html lang="de" dir="ltr" data-bewegung="normal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0F0F21">
+<meta name="description" content="Kugelblitz ist ein Flipper im Browser: fünf Missionen, Multiball, Bestenliste. Dunkel, ohne Ton, ohne Blitze, spielbar auch offline.">
+<meta name="application-name" content="Kugelblitz">
+<meta name="apple-mobile-web-app-title" content="Kugelblitz">
+<!-- Link-Vorschau. og:image muss absolut sein, Crawler lösen relative Pfade nicht auf. -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dennismit2n.github.io/kugelblitz/">
+<meta property="og:title" content="Kugelblitz · Pinball in your browser">
+<meta property="og:description" content="A pinball game in your browser: five missions, six ranks, multiball and high scores. No ball slips through the flippers, no flashing lights, no sound. 14 languages, offline after the first visit.">
+<meta property="og:image" content="https://dennismit2n.github.io/kugelblitz/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Dark graphic: the Kugelblitz icon, below it the name “Kugelblitz”, the line “Pinball in your browser” and, smaller, „Flipper im Browser.“ At the bottom „Kostenlos, ohne Ton, ohne Blitze, offline nach dem ersten Besuch“.">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="de_DE">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Kugelblitz · Flipper im Browser</title>
+<!-- Sehhilfen der Werkstatt vor dem ersten Bild (Abschnitt 7, Muster bigday und MW4 vom 31.10.2026): dieselbe Wahl wie in
+     allen Werkzeugen (localStorage werkstatt.darstellung, roher Text). Kugelblitz kennt nur seine dunkle Darstellung, darum
+     zählen hier nur die Sehhilfen: data-vision trägt Hoher Kontrast (contrast), Farbenblind (cvd) und Umkehr (invert),
+     data-hc den Grundton des Hohen Kontrasts. „System“ folgt „Kontrast erhöhen“ und dem Kontrastdesign von Windows.
+     Die Farbe der Browserleiste (theme-color) zieht mit. -->
+<script>(function(){var v=null,r=document.documentElement,m=window.matchMedia,f={dark:'#000000',light:'#FFFFFF'},t=null;try{v=localStorage.getItem('werkstatt.darstellung');}catch(e){}var d=!!(m&&m('(prefers-color-scheme: dark)').matches),k=!!(m&&(m('(prefers-contrast: more)').matches||m('(forced-colors: active)').matches));if(v==='hc-dark'||v==='hc-light'){r.setAttribute('data-vision','contrast');r.setAttribute('data-hc',v.slice(3));t=f[v.slice(3)];}else if(v==='cvd-dark'||v==='cvd-light'){r.setAttribute('data-vision','cvd');}else if(v==='invert'){r.setAttribute('data-vision','invert');t='#F0F0DE';}else if(k&&(!v||v==='system')){r.setAttribute('data-vision','contrast');r.setAttribute('data-hc',d?'dark':'light');t=f[d?'dark':'light'];}if(t){var c=document.querySelector('meta[name="theme-color"]');if(c)c.content=t;}})();</script>
+<script src="sprachen.js"></script>
+<script>
+/* Vor dem ersten Bild: Sprache erkennen und Seite darauf einstellen (lang, dir, Titel, Beschreibung, Schriftketten),
+   sonst stünde kurz die deutsche Vorgabe da. Gewählt wie bei Hourbridge: gespeicherte Wahl (kugelblitz.lang), sonst
+   navigator.languages, sonst Englisch. */
+(function () {
+  var S = window.Sprachen;
+  var gespeichert = null;
+  try { gespeichert = localStorage.getItem(S.SCHLUESSEL_SPEICHER); } catch (e) {}
+  window.kbDokumentSprache = function (code) {
+    var s = S.sprache(code), d = document.documentElement;
+    d.lang = s.code;
+    d.dir = s.dir;
+    d.style.setProperty("--font-text", s.schriftText);
+    d.style.setProperty("--font-schild", s.schriftTitel);
+    document.title = S.text(s.code, "titel");
+    var m = document.querySelector('meta[name="description"]');
+    if (m) m.content = S.text(s.code, "beschreibung");
+  };
+  window.kbSprache = S.erkenne(gespeichert, navigator.languages || [navigator.language || ""]);
+  /* Manifest nur über http(s): Unter file:// (Doppelklick) sperrt der Browser den Abruf und meldet einen Fehler in der
+     Konsole; installieren lässt sich dort ohnehin nichts. */
+  if (location.protocol !== "file:") {
+    var l = document.createElement("link");
+    l.rel = "manifest";
+    l.href = "manifest.webmanifest";
+    document.head.appendChild(l);
+  }
+  window.kbDokumentSprache(window.kbSprache);
+  /* Platz für den Knopf „Installieren“ (Abschnitt 7): Browser, die die Installation per beforeinstallprompt anbieten
+     (Chrome, Edge, Samsung Internet), bekommen seine Zeile von Anfang an, unsichtbar. Kommt das Angebot, erscheint der
+     Knopf in dieser Zeile, und nichts darunter rutscht. Alle anderen (Firefox, Safari, file://, die installierte App)
+     bekommen keine Zeile, dort erscheint der Knopf auch nie. */
+  var alsApp = ["fullscreen", "standalone", "minimal-ui"].some(function (a) { return window.matchMedia && matchMedia("(display-mode: " + a + ")").matches; }) || navigator.standalone === true;
+  if (location.protocol !== "file:" && "onbeforeinstallprompt" in window && !alsApp) document.documentElement.classList.add("install-platz");
+  /* beforeinstallprompt kann kommen, bevor das Skript am Seitenende läuft: hier aufheben (Muster Pocketsum 1.1) */
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    window.kbInstall = e;
+    if (window.kbInstallZeigen) window.kbInstallZeigen();
+  });
+})();
+</script>
+<style>
+  /* Fraunces (SIL Open Font License 1.1, schrift/OFL.txt), liegt bei, kein Abruf bei fremden Diensten.
+     Der Ersatz ist Georgia, auf Fraunces getrimmt (Werte aus der Startseite), solange sie lädt. */
+  @font-face {
+    font-family: "Fraunces Kugelblitz";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url("schrift/fraunces-latin-wght-normal.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Fraunces Ersatz";
+    font-style: normal;
+    font-weight: 500 900;
+    src: local("Georgia Bold"), local("Georgia-Bold");
+    size-adjust: 93%;
+    ascent-override: 105.2%;
+    descent-override: 27.4%;
+    line-gap-override: 0%;
+  }
+  @font-face {
+    font-family: "Fraunces Ersatz";
+    font-style: normal;
+    font-weight: 100 499;
+    src: local("Georgia");
+    size-adjust: 106.3%;
+    ascent-override: 92%;
+    descent-override: 24%;
+    line-gap-override: 0%;
+  }
+
+  /* Farben der Startseite, dunkle Darstellung (dennismit2n.github.io/css/style.css), als Werte kopiert.
+     Kugelblitz kennt nur diese dunkle Darstellung. */
+  :root {
+    color-scheme: dark;
+    --bg: #0F0F21;
+    --panel: #181831;
+    --panel-veil: rgba(24, 24, 49, 0.86);
+    --border: #2D2C4F;
+    --text: #E2E2F6;
+    --text-soft: #B7B9DC;
+    --accent: #B4B5FF;
+    --violett: #A5A5FF;
+    --lavendel: #AFA1FF;
+    --eis: #75C7FF;
+    --weissgold: #F1E4BC;
+    --raster-fein: rgba(165, 165, 255, 0.05);
+    --raster-grob: rgba(165, 165, 255, 0.1);
+    --shadow: -12px 14px 30px rgba(0, 0, 0, 0.5);
+    --claim: linear-gradient(90deg, #A5A5FF, #75C7FF, #AFA1FF);
+    --font-text: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-schild: "Fraunces Kugelblitz", "Fraunces Ersatz", var(--font-text);
+    --font-mono: Consolas, "Cascadia Mono", ui-monospace, monospace;
+    /* Weißgold-Schrauben der Startseite, Schlitze 32, -58, 78, -14 Grad */
+    --schraube-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cdefs%3E%3CradialGradient id='s' cx='42%' cy='58%' r='50%'%3E%3Cstop offset='55%' stop-opacity='.6'/%3E%3Cstop offset='100%' stop-opacity='0'/%3E%3C/radialGradient%3E%3CradialGradient id='k' cx='66%' cy='30%' r='78%'%3E%3Cstop offset='0' stop-color='%23FFFFFF'/%3E%3Cstop offset='.2' stop-color='%23FFFCEE'/%3E%3Cstop offset='.5' stop-color='%23F1E4BC'/%3E%3Cstop offset='.8' stop-color='%23C4A964'/%3E%3Cstop offset='1' stop-color='%237A6226'/%3E%3C/radialGradient%3E%3ClinearGradient id='m' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238A6A22' stop-opacity='.55'/%3E%3Cstop offset='.5' stop-color='%23FFF3C4' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23FFFBEA' stop-opacity='.7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='5.1' cy='6.9' r='5' fill='url(%23s)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='url(%23k)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='none' stroke='%23553E0C' stroke-opacity='.6' stroke-width='.45'/%3E%3Ccircle cx='6' cy='6' r='2.9' fill='none' stroke='url(%23m)' stroke-width='.5'/%3E%3Cg transform='rotate(32 6 6)'%3E%3Cpath d='M2.5 6h7' stroke='%233A2A07' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M2.7 6.62h6.6' stroke='%23FFF7DA' stroke-opacity='.75' stroke-width='.3' stroke-linecap='round'/%3E%3C/g%3E%3Cellipse cx='7.7' cy='3.9' rx='1.05' ry='.6' transform='rotate(-35 7.7 3.9)' fill='%23FFFFFF' fill-opacity='.9'/%3E%3C/svg%3E");
+    --schraube-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cdefs%3E%3CradialGradient id='s' cx='42%' cy='58%' r='50%'%3E%3Cstop offset='55%' stop-opacity='.6'/%3E%3Cstop offset='100%' stop-opacity='0'/%3E%3C/radialGradient%3E%3CradialGradient id='k' cx='66%' cy='30%' r='78%'%3E%3Cstop offset='0' stop-color='%23FFFFFF'/%3E%3Cstop offset='.2' stop-color='%23FFFCEE'/%3E%3Cstop offset='.5' stop-color='%23F1E4BC'/%3E%3Cstop offset='.8' stop-color='%23C4A964'/%3E%3Cstop offset='1' stop-color='%237A6226'/%3E%3C/radialGradient%3E%3ClinearGradient id='m' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238A6A22' stop-opacity='.55'/%3E%3Cstop offset='.5' stop-color='%23FFF3C4' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23FFFBEA' stop-opacity='.7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='5.1' cy='6.9' r='5' fill='url(%23s)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='url(%23k)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='none' stroke='%23553E0C' stroke-opacity='.6' stroke-width='.45'/%3E%3Ccircle cx='6' cy='6' r='2.9' fill='none' stroke='url(%23m)' stroke-width='.5'/%3E%3Cg transform='rotate(-58 6 6)'%3E%3Cpath d='M2.5 6h7' stroke='%233A2A07' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M2.7 6.62h6.6' stroke='%23FFF7DA' stroke-opacity='.75' stroke-width='.3' stroke-linecap='round'/%3E%3C/g%3E%3Cellipse cx='7.7' cy='3.9' rx='1.05' ry='.6' transform='rotate(-35 7.7 3.9)' fill='%23FFFFFF' fill-opacity='.9'/%3E%3C/svg%3E");
+    --schraube-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cdefs%3E%3CradialGradient id='s' cx='42%' cy='58%' r='50%'%3E%3Cstop offset='55%' stop-opacity='.6'/%3E%3Cstop offset='100%' stop-opacity='0'/%3E%3C/radialGradient%3E%3CradialGradient id='k' cx='66%' cy='30%' r='78%'%3E%3Cstop offset='0' stop-color='%23FFFFFF'/%3E%3Cstop offset='.2' stop-color='%23FFFCEE'/%3E%3Cstop offset='.5' stop-color='%23F1E4BC'/%3E%3Cstop offset='.8' stop-color='%23C4A964'/%3E%3Cstop offset='1' stop-color='%237A6226'/%3E%3C/radialGradient%3E%3ClinearGradient id='m' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238A6A22' stop-opacity='.55'/%3E%3Cstop offset='.5' stop-color='%23FFF3C4' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23FFFBEA' stop-opacity='.7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='5.1' cy='6.9' r='5' fill='url(%23s)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='url(%23k)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='none' stroke='%23553E0C' stroke-opacity='.6' stroke-width='.45'/%3E%3Ccircle cx='6' cy='6' r='2.9' fill='none' stroke='url(%23m)' stroke-width='.5'/%3E%3Cg transform='rotate(78 6 6)'%3E%3Cpath d='M2.5 6h7' stroke='%233A2A07' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M2.7 6.62h6.6' stroke='%23FFF7DA' stroke-opacity='.75' stroke-width='.3' stroke-linecap='round'/%3E%3C/g%3E%3Cellipse cx='7.7' cy='3.9' rx='1.05' ry='.6' transform='rotate(-35 7.7 3.9)' fill='%23FFFFFF' fill-opacity='.9'/%3E%3C/svg%3E");
+    --schraube-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cdefs%3E%3CradialGradient id='s' cx='42%' cy='58%' r='50%'%3E%3Cstop offset='55%' stop-opacity='.6'/%3E%3Cstop offset='100%' stop-opacity='0'/%3E%3C/radialGradient%3E%3CradialGradient id='k' cx='66%' cy='30%' r='78%'%3E%3Cstop offset='0' stop-color='%23FFFFFF'/%3E%3Cstop offset='.2' stop-color='%23FFFCEE'/%3E%3Cstop offset='.5' stop-color='%23F1E4BC'/%3E%3Cstop offset='.8' stop-color='%23C4A964'/%3E%3Cstop offset='1' stop-color='%237A6226'/%3E%3C/radialGradient%3E%3ClinearGradient id='m' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238A6A22' stop-opacity='.55'/%3E%3Cstop offset='.5' stop-color='%23FFF3C4' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23FFFBEA' stop-opacity='.7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='5.1' cy='6.9' r='5' fill='url(%23s)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='url(%23k)'/%3E%3Ccircle cx='6' cy='6' r='4.3' fill='none' stroke='%23553E0C' stroke-opacity='.6' stroke-width='.45'/%3E%3Ccircle cx='6' cy='6' r='2.9' fill='none' stroke='url(%23m)' stroke-width='.5'/%3E%3Cg transform='rotate(-14 6 6)'%3E%3Cpath d='M2.5 6h7' stroke='%233A2A07' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M2.7 6.62h6.6' stroke='%23FFF7DA' stroke-opacity='.75' stroke-width='.3' stroke-linecap='round'/%3E%3C/g%3E%3Cellipse cx='7.7' cy='3.9' rx='1.05' ry='.6' transform='rotate(-35 7.7 3.9)' fill='%23FFFFFF' fill-opacity='.9'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    font: 15px/1.5 var(--font-text);
+    color: var(--text);
+    background: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Koreanisch bricht an Leerzeichen, nicht mitten im Wort; Japanisch und Chinesisch nie vor ー, 々 oder kleinen Kana */
+  :root[lang="ko"] .kachel { word-break: keep-all; }
+  :root[lang="ja"] .kachel, :root[lang="zh"] .kachel { line-break: strict; }
+  /* Hindi trennt keine Wörter mit Bindestrich */
+  :root[lang="hi"] .kachel { hyphens: manual; }
+  .unsichtbar {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Aurora und Bauplan-Raster wie auf der Startseite. Die Wolken sind weiche Kreisverläufe ohne
+     Weichzeichner und driften nur sehr langsam (drei bis fünf Minuten je Bahn). Bei „weniger
+     Bewegung“ stehen sie still. */
+  .aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .aurora span { position: absolute; display: block; border-radius: 50%; }
+  .au-1 { width: 64vw; height: 62vh; top: -18vh; left: -16vw;
+    background: radial-gradient(closest-side, rgb(75 60 171 / 0.55), rgb(75 60 171 / 0.28) 42%, rgb(75 60 171 / 0.08) 74%, rgb(75 60 171 / 0)); }
+  .au-2 { width: 60vw; height: 62vh; bottom: -20vh; right: -14vw;
+    background: radial-gradient(closest-side, rgb(80 38 132 / 0.6), rgb(80 38 132 / 0.3) 42%, rgb(80 38 132 / 0.08) 74%, rgb(80 38 132 / 0)); }
+  .au-3 { width: 40vw; height: 44vh; top: 8vh; right: -8vw;
+    background: radial-gradient(closest-side, rgb(1 91 166 / 0.45), rgb(1 91 166 / 0.2) 42%, rgb(1 91 166 / 0.05) 74%, rgb(1 91 166 / 0)); }
+  .au-4 { width: 38vw; height: 42vh; bottom: -4vh; left: -10vw;
+    background: radial-gradient(closest-side, rgb(120 27 126 / 0.34), rgb(120 27 126 / 0.15) 42%, rgb(120 27 126 / 0.04) 74%, rgb(120 27 126 / 0)); }
+  .aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--raster-grob) 1px, transparent 1px),
+      linear-gradient(90deg, var(--raster-grob) 1px, transparent 1px),
+      linear-gradient(var(--raster-fein) 1px, transparent 1px),
+      linear-gradient(90deg, var(--raster-fein) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    -webkit-mask-image: linear-gradient(#000 45%, transparent 100%);
+    mask-image: linear-gradient(#000 45%, transparent 100%);
+  }
+  .au-1 { animation: au-wandern-1 204s ease-in-out infinite alternate; will-change: transform; }
+  .au-2 { animation: au-wandern-2 246s ease-in-out infinite alternate; will-change: transform; }
+  .au-3 { animation: au-wandern-3 174s ease-in-out infinite alternate; will-change: transform; }
+  .au-4 { animation: au-wandern-4 282s ease-in-out infinite alternate; will-change: transform; }
+  /* Bei „weniger Bewegung“ bleiben die Wolken stehen, wo sie gerade sind: angehalten statt entfernt, sonst springt
+     beim Umschalten eine große Fläche in einem Bild an den Anfang zurück (Prüfrunde, Abschnitt 4) */
+  :root[data-bewegung="wenig"] .aurora span { animation-play-state: paused; }
+  @keyframes au-wandern-1 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(16vw, 10vh) scale(1.12); } 100% { transform: translate(6vw, 24vh) scale(0.94); } }
+  @keyframes au-wandern-2 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-18vw, -12vh) scale(1.08); } 100% { transform: translate(-6vw, -26vh) scale(0.95); } }
+  @keyframes au-wandern-3 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-24vw, 20vh) scale(1.15); } 100% { transform: translate(-40vw, 6vh) scale(1); } }
+  @keyframes au-wandern-4 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(22vw, -20vh) scale(1.1); } 100% { transform: translate(38vw, -8vh) scale(0.92); } }
+
+  /* Aufbau: links der Spielstand, in der Mitte der Tisch, rechts die Werkstatt */
+  .seite {
+    display: grid;
+    grid-template-columns: 286px auto 286px;
+    grid-template-areas: "links tisch rechts";
+    gap: 16px 24px;
+    justify-content: center;
+    align-items: start;
+    padding: 16px;
+    min-height: 100dvh;
+  }
+  .tischbereich {
+    grid-area: tisch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 16px;
+    min-width: 0;
+  }
+  .links { grid-area: links; }
+  .rechts { grid-area: rechts; }
+  .spalte { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  /* Die Tischplatte: Canvas in der gerundeten Platte, Kappe im Verlauf der Startseite */
+  .tischplatte {
+    position: relative;
+    border-radius: 10px;
+    box-shadow: var(--shadow), 0 0 0 1px var(--border), 0 -10px 30px -16px rgba(165, 165, 255, 0.55);
+  }
+  .tischplatte::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: var(--claim) top / 100% 3px no-repeat;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @supports (mask-composite: exclude) {
+    .tischplatte::before {
+      border: 1px solid transparent;
+      border-top-width: 3px;
+      background: var(--claim) border-box top / 100% 46px no-repeat;
+      mask:
+        linear-gradient(#000 13px, transparent 46px) border-box,
+        linear-gradient(#000 0 0) padding-box,
+        linear-gradient(#000 0 0) border-box;
+      mask-composite: intersect, exclude;
+    }
+  }
+  #leinwand {
+    display: block;
+    border-radius: 10px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--panel);
+  }
+
+  /* Knopf „Neues Spiel“ auf der Tafel im Canvas: kleine Beschlag-Kachel */
+  .knopf-neu {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--accent);
+    font: 560 17px/1 var(--font-schild);
+    cursor: pointer;
+    box-shadow: -3px 4px 8px -4px rgba(0, 0, 0, 0.55);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .knopf-neu::before,
+  .knopf-leiste button::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    background:
+      var(--schraube-3) left 1px top 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-4) right 1px top 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-2) left 1px bottom 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-1) right 1px bottom 1px / 4.5px 4.5px no-repeat;
+    pointer-events: none;
+  }
+  .knopf-neu:hover, .knopf-neu:focus-visible { border-color: var(--accent); color: #D9DAFF; }
+  .knopf-neu { white-space: nowrap; overflow: hidden; }
+
+  /* Bedienleiste unter dem Tisch: nur mit Finger oder schmalem Bildschirm */
+  .knopf-leiste { display: none; gap: 10px; width: 100%; max-width: 560px; }
+  .knopf-leiste button {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 46px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-veil);
+    color: var(--text);
+    font: 500 14px/1.2 var(--font-text);
+    box-shadow: -3px 4px 8px -4px rgba(0, 0, 0, 0.55);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .knopf-leiste button:active { border-color: var(--accent); }
+  /* Lange Wörter (Empurrar, Duraklat) dürfen die vier Knöpfe nicht über den Rand schieben */
+  .knopf-leiste button { min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
+  @media (max-width: 360px) {
+    .knopf-leiste { gap: 6px; }
+    .knopf-leiste button { padding: 6px 4px; font-size: 12.5px; }
+  }
+  @media (pointer: coarse) { .knopf-leiste { display: flex; } }
+
+  /* Kacheln mit Beschlag: gerundete Platte, eckiger Innenrahmen, vier Schrauben, Kappe in der
+     Farbe der Kachel, Schatten nach links unten (Licht von rechts oben) */
+  .kachel {
+    --kachel: var(--accent);
+    position: relative;
+    padding: 17px 22px 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background:
+      radial-gradient(130% 70% at 50% 0%, color-mix(in srgb, var(--kachel) 13%, transparent), transparent 70%),
+      var(--panel-veil);
+    box-shadow: var(--shadow), 0 -10px 30px -16px color-mix(in srgb, var(--kachel) 60%, transparent);
+    isolation: isolate;
+    overflow-wrap: anywhere;
+    hyphens: auto;            /* lange Wörter (Deutsch, Niederländisch, Russisch) trennen statt die Kachel zu sprengen */
+  }
+  .kachel::after {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px solid color-mix(in srgb, var(--kachel) 40%, transparent);
+    background:
+      var(--schraube-1) left 3px top 3px / 9px 9px no-repeat,
+      var(--schraube-2) right 3px top 3px / 9px 9px no-repeat,
+      var(--schraube-3) left 3px bottom 3px / 9px 9px no-repeat,
+      var(--schraube-4) right 3px bottom 3px / 9px 9px no-repeat;
+    pointer-events: none;
+  }
+  .kachel::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(var(--kachel), var(--kachel)) top / 100% 4px no-repeat;
+    pointer-events: none;
+  }
+  @supports (mask-composite: exclude) {
+    .kachel::before {
+      border: 1px solid transparent;
+      border-top-width: 4px;
+      background: linear-gradient(var(--kachel), var(--kachel)) border-box top / 100% 40px no-repeat;
+      mask:
+        linear-gradient(#000 12px, transparent 40px) border-box,
+        linear-gradient(#000 0 0) padding-box,
+        linear-gradient(#000 0 0) border-box;
+      mask-composite: intersect, exclude;
+    }
+  }
+  .k-eis { --kachel: var(--eis); }
+  .k-lavendel { --kachel: var(--lavendel); }
+  .k-violett { --kachel: var(--violett); }
+  .k-gold { --kachel: var(--weissgold); }
+  .kachel h2 {
+    margin: 0 0 6px;
+    font: 560 1.05rem/1.3 var(--font-schild);
+    color: var(--kachel);
+    letter-spacing: 0;
+  }
+  .kachel p { margin: 0; }
+  .zahl { font-variant-numeric: tabular-nums lining-nums; }
+  /* Zahlen, die sich oft ändern (Punkte, Bonus, Stand der Mission): alte und neue Fassung liegen übereinander und
+     blenden addiert über (plus-lighter), gleiche Ziffern bleiben dabei ruhig stehen */
+  .weich { display: grid; isolation: isolate; }
+  .weich > span { grid-area: 1 / 1; mix-blend-mode: plus-lighter; }
+  .punkte-gross {
+    font: 600 40px/1.1 var(--font-schild);
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  .wert-gross { font: 600 26px/1.2 var(--font-schild); font-variant-numeric: tabular-nums lining-nums; }
+  .schild { font: 560 22px/1.25 var(--font-schild); color: var(--text); }
+  .neben { color: var(--text-soft); font-size: 13.5px; }
+  .neben + .neben { margin-top: 2px; }
+  .leise { color: var(--text-soft); }
+
+  /* Kugeln als kleine Chromkugeln */
+  .kugelreihe { display: flex; gap: 8px; margin: 8px 0 6px; padding: 0; list-style: none; }
+  .kugelreihe li {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: radial-gradient(circle at 66% 30%, #FFFFFF 0 8%, #BDB8E6 22%, #6E68A4 50%, #26234B 56%, #4A4680 100%);
+    box-shadow: -2px 3px 4px rgba(0, 0, 0, 0.55);
+    transition: opacity 0.2s ease;
+  }
+  .kugelreihe li.weg { opacity: 0.18; }
+  .kugelreihe li.jetzt { outline: 1px solid color-mix(in srgb, var(--eis) 70%, transparent); outline-offset: 3px; }
+
+  /* Rang-Leiter und Multiplikator */
+  .leiter { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 10px 0 8px; padding: 0; list-style: none; }
+  .leiter li { height: 7px; border-radius: 2px; background: #252349; transition: background-color 0.24s ease; }
+  .leiter li.an { background: color-mix(in srgb, var(--lavendel) 70%, #252349); }
+  .leiter li.jetzt { background: var(--lavendel); }
+  .leiter li:last-child.an { background: var(--eis); }
+  .mult { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0 8px; padding: 0; list-style: none; }
+  .mult li {
+    padding: 3px 0; border-radius: 4px; text-align: center;
+    font: 600 13px/1.2 var(--font-schild); font-variant-numeric: tabular-nums;
+    color: #6A6A98; background: #1B1A3A; border: 1px solid var(--border);
+    transition: background-color 0.24s ease, color 0.24s ease;
+  }
+  .mult li.an { color: #0F0F21; background: color-mix(in srgb, var(--eis) 80%, #1B1A3A); border-color: transparent; }
+
+  .balken { height: 6px; margin: 10px 0 6px; border-radius: 3px; background: #121128; border: 1px solid var(--border); overflow: hidden; }
+  .balken > i { display: block; height: 100%; width: 0; background: var(--lavendel); transition: width 0.3s ease-out; }
+
+  /* Bestenliste */
+  .liste { margin: 2px 0 0; padding: 0; list-style: none; font-size: 14px; }
+  .liste li {
+    display: grid; grid-template-columns: 1.5em 1fr auto; gap: 0 10px; align-items: baseline;
+    padding: 3px 0; border-bottom: 1px solid rgba(45, 44, 79, 0.7);
+  }
+  .liste li:last-child { border-bottom: 0; }
+  .liste .platz { color: var(--text-soft); font: 560 14px/1.4 var(--font-schild); }
+  .liste .punkte { font: 600 15px/1.4 var(--font-schild); font-variant-numeric: tabular-nums lining-nums; text-align: right; }
+  .liste .datum { color: var(--text-soft); font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; }
+  .liste li.neu .punkte { color: var(--lavendel); }
+  .liste li.neu .platz { color: var(--lavendel); }
+  /* Immer fünf Zeilen wie auf einer Rekordkarte: Die Kachel wächst nicht mit jedem Spiel, nichts darunter rutscht */
+  .liste li.leer .punkte { font: 400 13.5px/1.556 var(--font-text); color: var(--text-soft); opacity: 0.7; }
+
+  /* Texte, die je nach Inhalt eine oder zwei Zeilen brauchen, behalten immer Platz für zwei: Sonst springen die
+     Kacheln darunter um eine Zeile, sobald der Text wechselt. Genau misst das platzReservieren() im Skript, je Sprache
+     und Breite für jeden wechselnden Text; die Werte hier gelten nur, bis es gelaufen ist. */
+  #extraball, #mission-text { min-height: 3em; }
+
+  /* Einstellungen */
+  .regler { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; margin: 2px 0 12px; }
+  .regler output { font-variant-numeric: tabular-nums; color: var(--text); }
+  .regler input { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--lavendel); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; height: 18px; background: transparent; }
+  input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: #121128; border: 1px solid var(--border); }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; border: 1px solid #553E0C; background: radial-gradient(circle at 66% 30%, #FFFFFF, #F1E4BC 45%, #C4A964 75%, #7A6226); box-shadow: -2px 3px 4px rgba(0,0,0,0.5); }
+  input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: #121128; border: 1px solid var(--border); }
+  input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #553E0C; background: radial-gradient(circle at 66% 30%, #FFFFFF, #F1E4BC 45%, #C4A964 75%, #7A6226); }
+  fieldset.wahl { margin: 0; padding: 0; border: 0; min-width: 0; }
+  fieldset.wahl legend { padding: 0; margin-bottom: 6px; }
+  .segmente { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .segmente label { position: relative; cursor: pointer; }
+  .segmente input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .segmente span { display: block; padding: 6px 4px; text-align: center; font-size: 13.5px; color: var(--text-soft); background: #121128; transition: background-color 0.2s ease, color 0.2s ease; }
+  .segmente label + label span { border-left: 1px solid var(--border); }
+  .segmente input:checked + span { background: color-mix(in srgb, var(--lavendel) 26%, #121128); color: var(--text); }
+  .segmente input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* Sprache, Darstellung (Sehhilfen) und Installieren (Einstellungen) */
+  .sprachwahl { display: grid; gap: 6px; margin: 2px 0 12px; }
+  .sprachwahl.darstwahl { margin: 14px 0 0; }
+  .sprachwahl select {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #121128;
+    color: var(--text);
+    font: 14px/1.3 var(--font-text);
+  }
+  .sprachwahl select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* Knopf „Installieren“: im Werkstatt-Stil getönt, nicht hell gefüllt; eigene volle Zeile am Ende der Kachel
+     „Einstellungen“. In Browsern mit beforeinstallprompt steht seine Zeile von Anfang an da (unsichtbar, nicht
+     bedienbar), damit beim Erscheinen nichts rutscht (Abschnitt 7, Nebenbefund aus Abschnitt 6). */
+  :root.install-platz #installieren[hidden] { display: flex !important; visibility: hidden; }
+  .knopf-install {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    margin: 12px 0 0;
+    padding: 6px 14px;
+    border: 1px solid color-mix(in srgb, var(--lavendel) 55%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--lavendel) 13%, #121128);
+    color: #D4CCFF;
+    font: 560 15px/1.2 var(--font-schild);
+    cursor: pointer;
+    box-shadow: -3px 4px 8px -4px rgba(0, 0, 0, 0.55);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .knopf-install::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border: 1px solid color-mix(in srgb, var(--lavendel) 28%, transparent);
+    background:
+      var(--schraube-3) left 1px top 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-4) right 1px top 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-2) left 1px bottom 1px / 4.5px 4.5px no-repeat,
+      var(--schraube-1) right 1px bottom 1px / 4.5px 4.5px no-repeat;
+    pointer-events: none;
+  }
+  .knopf-install:hover, .knopf-install:focus-visible { border-color: var(--lavendel); background: color-mix(in srgb, var(--lavendel) 20%, #121128); }
+  .knopf-install svg { flex: none; }
+  .knopf-install span { min-width: 0; overflow-wrap: anywhere; text-align: center; }
+  .uebersetzung { margin-top: 10px !important; font-size: 12.5px; opacity: 0.8; }
+
+  /* Tasten */
+  .tasten { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .tasten td { padding: 3px 0; vertical-align: top; }
+  .tasten td:first-child { color: var(--text-soft); padding-right: 10px; white-space: nowrap; }
+  kbd {
+    font: 12.5px var(--font-mono); color: var(--text);
+    border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px;
+    padding: 0 5px; white-space: nowrap; background: #121128;
+  }
+
+  /* Physik, eingeklappt */
+  details summary {
+    cursor: pointer; list-style: none;
+    font: 560 1.05rem/1.3 var(--font-schild); color: var(--kachel);
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: " +"; color: var(--text-soft); font-family: var(--font-text); }
+  details[open] summary::after { content: " −"; }
+  details[open] summary { margin-bottom: 8px; }
+  dl.werte { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 0; font-size: 13.5px; }
+  dl.werte dt { color: var(--text-soft); }
+  dl.werte dd { margin: 0; font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+  .erklaerung { margin: 8px 0 0; color: var(--text-soft); font-size: 13px; }
+  .bericht { margin: 6px 0 0; font: 12.5px/1.5 var(--font-mono); white-space: pre-wrap; color: var(--text); }
+
+  /* Schmale Leiste über dem Tisch (nur am Telefon): Punkte, Kugel, Rang */
+  .kopfleiste {
+    display: none;
+    width: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 4px;
+  }
+  .kopfleiste .punkte-klein { flex: none; font: 600 24px/1.1 var(--font-schild); font-variant-numeric: tabular-nums lining-nums; }
+  .kopfleiste > span { min-width: 0; color: var(--text-soft); font-size: 13.5px; white-space: nowrap; }
+  /* Bleibt immer einzeilig (sonst rutschte der Tisch mitten im Spiel um eine Zeile): zu Langes endet mit „…“ */
+  .kopfleiste .weich { grid-template-columns: minmax(0, auto); }
+  .kopfleiste .weich > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Mittlere Breite: der Tisch links, alle Kacheln in einem Raster rechts daneben (zwei Spalten, Lücken
+     werden aufgefüllt), unter 900 px in einer Spalte */
+  @media (max-width: 1199px) and (min-width: 761px) {
+    .seite {
+      grid-template-columns: auto repeat(2, minmax(0, 232px));
+      grid-template-areas: none;
+      grid-auto-flow: row dense;
+    }
+    .tischbereich { grid-column: 1; grid-row: 1 / span 8; }
+    .links, .rechts { display: contents; }
+    .breit { grid-column: 2 / -1; }
+  }
+  @media (max-width: 1199px) and (min-width: 900px) {
+    #kammer, #rang-text { min-height: 3em; }   /* in den schmalen Kacheln eine oder zwei Zeilen */
+  }
+  @media (max-width: 899px) and (min-width: 761px) {
+    .seite { grid-template-columns: auto minmax(0, 280px); }
+    .tischbereich { grid-row: 1 / span 11; }
+    .kachel, .breit { grid-column: 2; }
+  }
+  @media (max-width: 760px) {
+    .seite {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "tisch" "links" "rechts";
+      padding: 10px 16px 28px;
+    }
+    .tischbereich { position: static; }
+    .kopfleiste { display: flex; }
+    .knopf-leiste { display: flex; }
+  }
+
+  /* ---------- Sehhilfen der Werkstatt (Abschnitt 7) ----------
+     Hoher Kontrast (data-vision="contrast", Grundton in data-hc), Farbenblind (cvd) und Umgekehrte Farben (invert), eine
+     Wahl für alle Werkzeuge (werkstatt.darstellung). Werte wie in der ganzen Werkstatt: HC dunkel #000, Schrift #E0E0E0,
+     leise #C4C4C4, Rand #A0A0A0; HC hell #FFF, #000, #2B2B2B, Rand #585757; Kachelfarben behalten ihren Farbton, im
+     Hellen auf 7:1 nachgedunkelt. Hoher Kontrast kennt keine Verläufe, keinen Glow, keine Transparenz und keine
+     Aurora; der Beschlag bleibt, die Schrauben werden flach. Den Tisch zeichnet grafik.js je Darstellung selbst. */
+
+  /* Beim Wechsel der Darstellung springt alles in einem Bild um, statt dass einzelne Teile nachblenden */
+  :root.ohne-uebergang *, :root.ohne-uebergang *::before, :root.ohne-uebergang *::after { transition: none !important; }
+
+  :root[data-vision="contrast"][data-hc="dark"] {
+    --bg: #000000;
+    --panel: #000000;
+    --panel-veil: #000000;
+    --border: #A0A0A0;        /* 7,9:1 */
+    --text: #E0E0E0;          /* 15,9:1 */
+    --text-soft: #C4C4C4;     /* 12,0:1 */
+    --accent: #B4B5FF;        /* 11,0:1 */
+    --violett: #A5A5FF;       /* 9,4:1 */
+    --lavendel: #AFA1FF;      /* 9,4:1 */
+    --eis: #75C7FF;           /* 11,4:1 */
+    --weissgold: #F1E4BC;     /* 16,6:1 */
+    --auf-farbe: #000000;     /* Schrift auf einer Fläche in Kachelfarbe */
+    --schraube-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23F1E4BC' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23000000' stroke-width='1.3' stroke-linecap='round' transform='rotate(32 6 6)'/%3E%3C/svg%3E");
+    --schraube-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23F1E4BC' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23000000' stroke-width='1.3' stroke-linecap='round' transform='rotate(-58 6 6)'/%3E%3C/svg%3E");
+    --schraube-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23F1E4BC' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23000000' stroke-width='1.3' stroke-linecap='round' transform='rotate(78 6 6)'/%3E%3C/svg%3E");
+    --schraube-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23F1E4BC' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23000000' stroke-width='1.3' stroke-linecap='round' transform='rotate(-14 6 6)'/%3E%3C/svg%3E");
+  }
+  :root[data-vision="contrast"][data-hc="light"] {
+    color-scheme: light;
+    --bg: #FFFFFF;
+    --panel: #FFFFFF;
+    --panel-veil: #FFFFFF;
+    --border: #585757;        /* 7,2:1 */
+    --text: #000000;
+    --text-soft: #2B2B2B;     /* 14,2:1 */
+    --accent: #525091;        /* 7,2:1 */
+    --violett: #524D9E;       /* 7,2:1 */
+    --lavendel: #5B499F;      /* 7,3:1 */
+    --eis: #005C8A;           /* 7,3:1 */
+    --weissgold: #625633;     /* 7,3:1 */
+    --auf-farbe: #FFFFFF;
+    --schraube-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23625633' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23FFFFFF' stroke-width='1.3' stroke-linecap='round' transform='rotate(32 6 6)'/%3E%3C/svg%3E");
+    --schraube-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23625633' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23FFFFFF' stroke-width='1.3' stroke-linecap='round' transform='rotate(-58 6 6)'/%3E%3C/svg%3E");
+    --schraube-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23625633' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23FFFFFF' stroke-width='1.3' stroke-linecap='round' transform='rotate(78 6 6)'/%3E%3C/svg%3E");
+    --schraube-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5' fill='%23625633' stroke='%23000000' stroke-width='.7'/%3E%3Cpath d='M3 6h6' stroke='%23FFFFFF' stroke-width='1.3' stroke-linecap='round' transform='rotate(-14 6 6)'/%3E%3C/svg%3E");
+  }
+  /* Aufbau im Hohen Kontrast: Flächen deckend, Linien voll, keine Schatten, kein Schein. Die Aurora bleibt unsichtbar
+     stehen (visibility statt display, sonst sprängen die Wolken beim Zurückschalten an ihren Anfang). */
+  :root[data-vision="contrast"] .aurora { visibility: hidden; }
+  :root[data-vision="contrast"] .tischplatte { box-shadow: 0 0 0 1px var(--border); }
+  :root[data-vision="contrast"] .tischplatte::before,
+  :root[data-vision="contrast"] .kachel::before {
+    border: 0;
+    -webkit-mask: none;
+    mask: none;
+  }
+  :root[data-vision="contrast"] .tischplatte::before { background: linear-gradient(var(--accent), var(--accent)) top / 100% 3px no-repeat; }
+  :root[data-vision="contrast"] .kachel::before { background: linear-gradient(var(--kachel), var(--kachel)) top / 100% 4px no-repeat; }
+  :root[data-vision="contrast"] .kachel { background: var(--panel); box-shadow: none; }
+  :root[data-vision="contrast"] .kachel::after,
+  :root[data-vision="contrast"] :is(.knopf-neu, .knopf-leiste button, .knopf-install)::before { border-color: var(--border); }
+  :root[data-vision="contrast"] .knopf-neu { border-color: var(--accent); background: var(--bg); color: var(--accent); box-shadow: none; }
+  :root[data-vision="contrast"] :is(.knopf-neu:hover, .knopf-neu:focus-visible) { border-color: var(--text); color: var(--text); }
+  :root[data-vision="contrast"] .knopf-leiste button { background: var(--bg); box-shadow: none; }
+  :root[data-vision="contrast"] .knopf-leiste button:active { border-color: var(--text); }
+  :root[data-vision="contrast"] .knopf-install { border-color: var(--lavendel); background: var(--bg); color: var(--text); box-shadow: none; }
+  :root[data-vision="contrast"] :is(.knopf-install:hover, .knopf-install:focus-visible) { border-color: var(--text); background: var(--bg); }
+  :root[data-vision="contrast"] .kugelreihe li { background: var(--text); box-shadow: none; }
+  :root[data-vision="contrast"] .kugelreihe li.weg { opacity: 1; background: transparent; box-shadow: inset 0 0 0 1.5px var(--border); }
+  :root[data-vision="contrast"] .kugelreihe li.jetzt { outline: 2px solid var(--eis); outline-offset: 2px; }
+  :root[data-vision="contrast"] .leiter li { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+  :root[data-vision="contrast"] .leiter li.an { background: var(--lavendel); box-shadow: none; }
+  :root[data-vision="contrast"] .leiter li.jetzt { background: var(--text); }
+  :root[data-vision="contrast"] .leiter li:last-child.an { background: var(--eis); }
+  :root[data-vision="contrast"] .mult li { color: var(--text-soft); background: var(--bg); border-color: var(--border); }
+  :root[data-vision="contrast"] .mult li.an { color: var(--auf-farbe); background: var(--eis); border-color: var(--eis); }
+  :root[data-vision="contrast"] .balken { background: var(--bg); border-color: var(--border); }
+  :root[data-vision="contrast"] .liste li { border-bottom-color: var(--border); }
+  :root[data-vision="contrast"] :is(.liste li.leer .punkte, .uebersetzung) { opacity: 1; }
+  :root[data-vision="contrast"] input[type="range"]::-webkit-slider-runnable-track { background: var(--bg); border-color: var(--border); }
+  :root[data-vision="contrast"] input[type="range"]::-moz-range-track { background: var(--bg); border-color: var(--border); }
+  :root[data-vision="contrast"] input[type="range"]::-webkit-slider-thumb { background: var(--weissgold); border-color: var(--text); box-shadow: none; }
+  :root[data-vision="contrast"] input[type="range"]::-moz-range-thumb { background: var(--weissgold); border-color: var(--text); }
+  :root[data-vision="contrast"] .segmente span { background: var(--bg); color: var(--text-soft); }
+  :root[data-vision="contrast"] .segmente input:checked + span { background: var(--lavendel); color: var(--auf-farbe); }
+  :root[data-vision="contrast"] .sprachwahl select { background: var(--bg); border-color: var(--border); color: var(--text); }
+  :root[data-vision="contrast"] kbd { background: var(--bg); border-color: var(--border); }
+  :root[data-vision="contrast"] :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* Farbenblind: Lichtfarben nach Okabe und Ito (Himmelblau, Orange, Rötliches Purpur, Gelb), dieselbe Zuordnung wie
+     auf dem Tisch. Zustände tragen zusätzlich ein Zeichen: neue Zeile der Bestenliste fett und unterstrichen, die
+     erreichte Stufe der Rang-Leiter mit Rahmen. */
+  :root[data-vision="cvd"] {
+    --eis: #56B4E9;
+    --lavendel: #E69F00;
+    --violett: #CC79A7;
+    --weissgold: #F0E442;
+  }
+  :root[data-vision="cvd"] .liste li.neu :is(.platz, .punkte) { font-weight: 700; text-decoration: underline 2px; text-underline-offset: 3px; }
+  :root[data-vision="cvd"] .leiter li.jetzt { outline: 1px solid var(--text); outline-offset: 1px; }
+  :root[data-vision="cvd"] .knopf-install { color: var(--text); }
+  /* Gewählter Teil eines Umschalters: nicht nur getönt, auch fett und unterstrichen (Farbenblind und Hoher Kontrast) */
+  :root:is([data-vision="cvd"], [data-vision="contrast"]) .segmente input:checked + span { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+  /* Umgekehrte Farben wie der Farbfilter von Windows, auch der Tisch (grafik.js zeichnet dafür ruhiger, siehe dort).
+     Rasterbilder und alles mit data-echt werden zurückgedreht und bleiben echt; gedruckt wird nie umgedreht. */
+  :root[data-vision="invert"] { filter: invert(1); }
+  :root[data-vision="invert"] :is(img:not([src*=".svg"]), video, [data-echt]):not([data-echt] *) { filter: invert(1); }
+  /* Kontrast nach dem Umdrehen: „noch frei“ in der Bestenliste (leise Schrift mit 70 % Deckkraft) hielte gedreht nur 3,5:1 */
+  :root[data-vision="invert"] .liste li.leer .punkte { opacity: 1; }
+  @media print {
+    :root[data-vision="invert"],
+    :root[data-vision="invert"] :is(img:not([src*=".svg"]), video, [data-echt]):not([data-echt] *) { filter: none; }
+  }
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><span class="au-1"></span><span class="au-2"></span><span class="au-3"></span><span class="au-4"></span></div>
+
+<main class="seite">
+  <section class="tischbereich" aria-label="Flippertisch" data-i-aria="aria_tisch">
+    <div class="kopfleiste" aria-hidden="true">
+      <strong class="punkte-klein" id="kopf-punkte">0</strong>
+      <span id="kopf-kugel">Kein Spiel</span>
+      <span id="kopf-rang">Funke</span>
+    </div>
+    <div class="tischplatte" id="tischplatte">
+      <canvas id="leinwand" role="img" aria-label="Flippertisch Kugelblitz" data-i-aria="aria_leinwand"></canvas>
+      <button type="button" class="knopf-neu" id="neues-spiel" hidden data-i="neues_spiel">Neues Spiel</button>
+    </div>
+    <div class="knopf-leiste" id="knopf-leiste">
+      <button type="button" id="schubs-links" aria-label="Schubs nach links" data-i="schubs_l" data-i-aria="aria_schubs_l">Schubs ←</button>
+      <button type="button" id="schubs-hoch" aria-label="Schubs nach oben" data-i="schubs_h" data-i-aria="aria_schubs_h">Schubs ↑</button>
+      <button type="button" id="schubs-rechts" aria-label="Schubs nach rechts" data-i="schubs_r" data-i-aria="aria_schubs_r">Schubs →</button>
+      <button type="button" id="knopf-pause" data-i="pause">Pause</button>
+    </div>
+    <p class="unsichtbar" id="ansage" aria-live="polite"></p>
+  </section>
+
+  <aside class="spalte links" aria-label="Spielstand" data-i-aria="aria_spielstand">
+    <section class="kachel k-eis breit">
+      <h2 data-i="punkte">Punkte</h2>
+      <p class="punkte-gross" id="punkte">0</p>
+      <p class="neben"><span data-i="rekord">Rekord</span> <span class="zahl" id="rekord">0</span></p>
+    </section>
+    <section class="kachel k-lavendel">
+      <h2 data-i="kugel">Kugel</h2>
+      <p class="wert-gross" id="kugel">Kein Spiel</p>
+      <ol class="kugelreihe" id="kugelreihe" aria-hidden="true"><li></li><li></li><li></li></ol>
+      <p class="neben" id="extraball">Extraball nach der dritten leeren Fallziel-Bank</p>
+    </section>
+    <section class="kachel k-violett">
+      <h2 data-i="rang">Rang</h2>
+      <p class="schild" id="rang-name">Funke</p>
+      <ol class="leiter" id="rang-leiter" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li><li></li></ol>
+      <p class="neben" id="rang-text">Rang 1 von 6</p>
+    </section>
+    <section class="kachel k-lavendel breit">
+      <h2 id="mission-nr">Mission 1 von 5</h2>
+      <p class="schild" id="mission-name">Ladung sammeln</p>
+      <p class="neben" id="mission-text">Triff die Bumper 15 Mal</p>
+      <div class="balken" aria-hidden="true"><i id="mission-balken"></i></div>
+      <p class="neben" id="mission-stand">Startet mit dem ersten Abschuss</p>
+    </section>
+    <section class="kachel k-eis">
+      <h2 data-i="bonus">Bonus</h2>
+      <p class="wert-gross" id="bonus">0</p>
+      <ol class="mult" id="mult" aria-hidden="true"><li>1×</li><li>2×</li><li>3×</li><li>4×</li><li>5×</li></ol>
+      <p class="unsichtbar" id="mult-text">Multiplikator 1 mal</p>
+      <p class="neben" id="kammer">Zündkammer: nichts leuchtet</p>
+    </section>
+  </aside>
+
+  <aside class="spalte rechts" aria-label="Werkstatt" data-i-aria="aria_werkstatt">
+    <section class="kachel k-gold breit" id="licht-kachel" hidden>
+      <h2>Lichtprüfung</h2>
+      <p class="neben" id="licht-status">Läuft …</p>
+      <pre class="bericht" id="licht-bericht"></pre>
+    </section>
+    <section class="kachel k-violett">
+      <h2 data-i="bestenliste">Bestenliste</h2>
+      <ol class="liste" id="bestenliste"></ol>
+    </section>
+    <section class="kachel k-lavendel" id="einstellungen">
+      <h2 data-i="einstellungen">Einstellungen</h2>
+      <div class="sprachwahl">
+        <label for="sprache" data-i="sprache">Sprache</label>
+        <select id="sprache"></select>
+      </div>
+      <label class="regler"><span data-i="lichtstaerke">Lichtstärke</span><output id="licht-wert" for="lichtstaerke">70 %</output>
+        <input type="range" id="lichtstaerke" min="30" max="100" step="5" value="70"></label>
+      <fieldset class="wahl">
+        <legend data-i="bewegung">Weniger Bewegung</legend>
+        <div class="segmente">
+          <label><input type="radio" name="bewegung" value="system" checked><span data-i="bewegung_system">System</span></label>
+          <label><input type="radio" name="bewegung" value="an"><span data-i="bewegung_an">An</span></label>
+          <label><input type="radio" name="bewegung" value="aus"><span data-i="bewegung_aus">Aus</span></label>
+        </div>
+      </fieldset>
+      <p class="neben" id="bewegung-text" style="margin-top: 6px"></p>
+      <!-- Sehhilfen der Werkstatt (Abschnitt 7): Normal, Hoher Kontrast dunkel und hell, Farbenblind, Umkehr -->
+      <div class="sprachwahl darstwahl">
+        <label for="darstellung" data-i="darstellung">Darstellung</label>
+        <select id="darstellung"></select>
+      </div>
+      <p class="neben uebersetzung" data-i="uebersetzung">Übersetzungen teils maschinell, Korrekturen nehme ich gern an.</p>
+      <button type="button" class="knopf-install" id="installieren" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i="installieren">Installieren</span></button>
+    </section>
+    <section class="kachel k-eis breit">
+      <h2 data-i="tasten">Tasten</h2>
+      <table class="tasten"><tbody id="tasten-liste"></tbody></table>
+    </section>
+    <section class="kachel k-violett breit">
+      <details id="physik">
+        <summary data-i="physik">Physik und Prüfung</summary>
+        <dl class="werte">
+          <dt data-i="ph_verfahren">Verfahren</dt><dd id="modus">Unterschritte</dd>
+          <dt data-i="ph_schritte">Schritte je Takt</dt><dd id="schritte">noch keine</dd>
+          <dt data-i="ph_tempo">Schnellste Kugel</dt><dd id="tempo">0,0</dd>
+          <dt data-i="ph_durch">Durchschüsse</dt><dd id="durchschuesse">0</dd>
+          <dt data-i="ph_aus">Ausbrüche</dt><dd id="ausbrueche">0</dd>
+          <dt data-i="ph_proben">Probekugeln durch</dt><dd id="proben">keine</dd>
+          <dt data-i="ph_mittel">Zeichnen, Mittel</dt><dd id="zeit-mittel">noch keine</dd>
+          <dt data-i="ph_p95">Zeichnen, p95</dt><dd id="zeit-p95">noch keine</dd>
+        </dl>
+        <p class="erklaerung" id="modus-text"></p>
+        <p class="erklaerung" id="physik-hinweis"></p>
+      </details>
+    </section>
+  </aside>
+</main>
+
+<script src="physik.js"></script>
+<script src="regeln.js"></script>
+<script src="grafik.js"></script>
+<script>
+"use strict";
+(function () {
+  const P = window.Physik;
+  const R = window.Regeln;
+  const G = window.Grafik;
+  const SP = window.Sprachen;
+  const $ = (id) => document.getElementById(id);
+
+  // Sprache (Abschnitt 6): erkannt im Kopf der Seite, gewechselt im Auswahlfeld der Einstellungen
+  let sprache = window.kbSprache || "de";
+  const T = (k, w) => SP.text(sprache, k, w);
+  const zahl = (n) => SP.zahl(sprache, n);
+  const leinwand = $("leinwand");
+  const platte = $("tischplatte");
+  const knopfNeu = $("neues-spiel");
+
+  // --- Einstellungen ------------------------------------------------------------
+
+  const SCHUBS = R.KONST.SCHUBS;
+  const SALVE = 8;                   // Probekugeln je Salve
+  const SALVE_ABSTAND = 0.3;
+  const SALVE_TEMPO = 9;
+  const PROBE_LEBENSDAUER = 0.7;
+  const MELDUNG_DAUER = 2.5;
+  const GASSEN = ["L", "A", "D"];
+
+  const bauplan = P.standardBauplan();
+  let tisch = new P.Tisch(bauplan);
+
+  // Das Regelwerk führt den ganzen Spielstand. Hier wird nur gelesen (regeln.z) und die Eingabe weitergereicht.
+  const regeln = new R.Regelwerk(tisch, { speicher: R.speicherLocalStorage() });
+  const z = regeln.z;
+
+  // Die Grafik liest Physik und Regeln und zeichnet; sie schreibt in keins von beiden.
+  const grafik = new G.Grafik(leinwand, bauplan);
+
+  // Lichtstärke und weniger Bewegung, gespeichert im Browser (jeder Zugriff abgesichert)
+  const SCHLUESSEL_LICHT = "kugelblitz.lichtstaerke";
+  const SCHLUESSEL_BEWEGUNG = "kugelblitz.bewegung";
+  function lies(k) { try { return localStorage.getItem(k); } catch { return null; } }
+  function schreibe(k, v) { try { localStorage.setItem(k, String(v)); } catch { /* egal */ } }
+  const einst = { lichtstaerke: 70, bewegung: "system" };
+  {
+    const l = Number(lies(SCHLUESSEL_LICHT));
+    if (Number.isFinite(l) && l >= 30 && l <= 100) einst.lichtstaerke = Math.round(l / 5) * 5;
+    const b = lies(SCHLUESSEL_BEWEGUNG);
+    if (b === "system" || b === "an" || b === "aus") einst.bewegung = b;
+  }
+  const bewegungsAbfrage = matchMedia("(prefers-reduced-motion: reduce)");
+  function wenigBewegung() {
+    return einst.bewegung === "an" || (einst.bewegung === "system" && bewegungsAbfrage.matches);
+  }
+  function einstellungenAnwenden() {
+    const wenig = wenigBewegung();
+    grafik.einstellungen({ lichtstaerke: einst.lichtstaerke / 100, wenigBewegung: wenig });
+    document.documentElement.dataset.bewegung = wenig ? "wenig" : "normal";
+    $("lichtstaerke").value = String(einst.lichtstaerke);
+    $("licht-wert").textContent = SP.prozent(sprache, einst.lichtstaerke);
+    for (const r of document.querySelectorAll('input[name="bewegung"]')) r.checked = r.value === einst.bewegung;
+    $("bewegung-text").textContent = T(einst.bewegung === "system"
+      ? (bewegungsAbfrage.matches ? "bewegung_folgt_an" : "bewegung_folgt_aus")
+      : einst.bewegung === "an" ? "bewegung_text_an" : "bewegung_text_aus");
+  }
+  bewegungsAbfrage.addEventListener("change", einstellungenAnwenden);
+  // Mit Maus oder Finger eingestellt: danach den Fokus abgeben, sonst schalten die Pfeiltasten
+  // (linker und rechter Flipper) die Auswahl um statt der Flipper
+  let zuletztZeiger = false;
+  window.addEventListener("pointerdown", () => { zuletztZeiger = true; }, true);
+  window.addEventListener("keydown", () => { zuletztZeiger = false; }, true);
+  const fokusAbgeben = (el) => { if (zuletztZeiger) el.blur(); };
+  $("lichtstaerke").addEventListener("change", (e) => fokusAbgeben(e.target));
+  $("lichtstaerke").addEventListener("input", (e) => {
+    einst.lichtstaerke = Math.max(30, Math.min(100, Number(e.target.value) || 70));
+    schreibe(SCHLUESSEL_LICHT, einst.lichtstaerke);
+    einstellungenAnwenden();
+  });
+  for (const r of document.querySelectorAll('input[name="bewegung"]')) {
+    r.addEventListener("change", () => {
+      if (!r.checked) return;
+      einst.bewegung = r.value;
+      schreibe(SCHLUESSEL_BEWEGUNG, einst.bewegung);
+      einstellungenAnwenden();
+      fokusAbgeben(r);
+    });
+  }
+  einstellungenAnwenden();
+
+  // --- Sehhilfen der Werkstatt (Abschnitt 7) ---------------------------------------------------
+  // Eine Wahl für alle Werkzeuge: localStorage werkstatt.darstellung, roher Text (system, light, dark, hc-dark, hc-light,
+  // cvd-dark, cvd-light, invert). Kugelblitz hat nur seine dunkle Darstellung, darum fünf Einträge wie bigday und MW4:
+  // Normal, Hoher Kontrast dunkel, Hoher Kontrast hell, Farbenblind, Umkehr. „Normal“ lässt Hell, Dunkel oder System aus
+  // einem anderen Werkzeug stehen, „Farbenblind“ merkt sich hell oder dunkel nach dem Gerät. Der Kopf der Seite setzt
+  // data-vision und data-hc vor dem ersten Bild; hier folgen Auswahlfeld, Laufzeit und der Tisch (grafik.setzeModus).
+  // Lichtsicherheit: Ein Wechsel ist eine einmalige Handlung. Wer aber mit den Pfeiltasten durch das Feld läuft, wechselte
+  // mit jeder Taste zwischen dunkel und hell. Deshalb wechselt die Darstellung höchstens alle 1,5 s; gezeigt wird der
+  // neueste Wunsch, Zwischenstände fallen weg (wie bei den Lampen). Seite und Tisch wechseln im selben Bild.
+  const SCHLUESSEL_DARSTELLUNG = "werkstatt.darstellung";
+  const DARST_OPTIONEN = [["normal", "darst_normal"], ["hc-dark", "darst_hc_dunkel"], ["hc-light", "darst_hc_hell"],
+    ["cvd", "darst_farbenblind"], ["invert", "darst_umkehr"]];
+  const DARST_HALTEN = 1.5;          // s; deutlich mehr als 1 s, damit zwei Wechsel nie in dasselbe Fenster eines Blitzes fallen
+  const THEMA_FARBE = { normal: "#0F0F21", "hc-dunkel": "#000000", "hc-hell": "#FFFFFF", farbenblind: "#0F0F21", umkehr: "#F0F0DE" };
+  const medium = (q) => !!(window.matchMedia && matchMedia(q).matches);
+  let darstOhneSpeicher = null;      // gilt, wenn der Browser keinen Speicher erlaubt (nur für diesen Besuch)
+  const gespeicherteDarstellung = () => lies(SCHLUESSEL_DARSTELLUNG) || darstOhneSpeicher || "system";
+  function darstOption(v) {
+    if (v === "hc-dark" || v === "hc-light" || v === "invert") return v;
+    if (v === "cvd-dark" || v === "cvd-light") return "cvd";
+    return "normal";
+  }
+  // Gespeicherter Wert → Darstellung des Tisches (wie der Kopf der Seite)
+  function darstModus(v) {
+    if (v === "hc-dark") return "hc-dunkel";
+    if (v === "hc-light") return "hc-hell";
+    if (v === "cvd-dark" || v === "cvd-light") return "farbenblind";
+    if (v === "invert") return "umkehr";
+    if (v === "system" && (medium("(prefers-contrast: more)") || medium("(forced-colors: active)"))) {
+      return medium("(prefers-color-scheme: dark)") ? "hc-dunkel" : "hc-hell";
+    }
+    return "normal";
+  }
+  function modusAusSeite() {
+    const r = document.documentElement;
+    const s = r.getAttribute("data-vision");
+    if (s === "contrast") return r.getAttribute("data-hc") === "light" ? "hc-hell" : "hc-dunkel";
+    return s === "cvd" ? "farbenblind" : s === "invert" ? "umkehr" : "normal";
+  }
+  let darstJetzt = modusAusSeite();
+  let darstSeit = -1e9;
+  let darstTimer = 0;
+  function darstZeigen(modus) {
+    const r = document.documentElement;
+    r.classList.add("ohne-uebergang");
+    r.removeAttribute("data-vision");
+    r.removeAttribute("data-hc");
+    if (modus === "hc-dunkel" || modus === "hc-hell") {
+      r.setAttribute("data-vision", "contrast");
+      r.setAttribute("data-hc", modus === "hc-hell" ? "light" : "dark");
+    } else if (modus === "farbenblind") r.setAttribute("data-vision", "cvd");
+    else if (modus === "umkehr") r.setAttribute("data-vision", "invert");
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = THEMA_FARBE[modus];
+    grafik.setzeModus(modus);        // backt Tisch und Sprites neu; das nächste Bild zeigt Seite und Tisch zugleich
+    darstJetzt = modus;
+    requestAnimationFrame(() => requestAnimationFrame(() => r.classList.remove("ohne-uebergang")));
+  }
+  function darstFolgen() {
+    clearTimeout(darstTimer);
+    darstTimer = 0;
+    const modus = darstModus(gespeicherteDarstellung());
+    if (modus === darstJetzt) return;
+    const jetzt = performance.now() / 1000;
+    const warten = darstSeit + DARST_HALTEN - jetzt;
+    if (warten > 0) { darstTimer = setTimeout(darstFolgen, Math.ceil(warten * 1000) + 5); return; }
+    darstSeit = jetzt;
+    darstZeigen(modus);
+  }
+  const darstFeld = $("darstellung");
+  for (const [wert, schluessel] of DARST_OPTIONEN) {
+    const o = document.createElement("option");
+    o.value = wert;
+    o.dataset.i = schluessel;
+    darstFeld.appendChild(o);
+  }
+  darstFeld.value = darstOption(gespeicherteDarstellung());
+  darstFeld.addEventListener("change", () => {
+    const wahl = darstFeld.value;
+    const alt = gespeicherteDarstellung();
+    let neu = wahl;
+    if (wahl === "normal") neu = darstOption(alt) === "normal" ? alt : "system";
+    else if (wahl === "cvd") neu = darstOption(alt) === "cvd" ? alt : (medium("(prefers-color-scheme: dark)") ? "cvd-dark" : "cvd-light");
+    darstOhneSpeicher = neu;
+    schreibe(SCHLUESSEL_DARSTELLUNG, neu);
+    darstFolgen();
+    fokusAbgeben(darstFeld);
+  });
+  // „System“ folgt dem Gerät (Kontrast erhöhen, Kontrastdesign, hell oder dunkel); eine Wahl in einem anderen Werkzeug
+  // oder vor dem Zurückkehren auf die Seite gilt sofort
+  for (const q of ["(prefers-color-scheme: dark)", "(prefers-contrast: more)", "(forced-colors: active)"]) {
+    if (window.matchMedia) matchMedia(q).addEventListener("change", darstFolgen);
+  }
+  function darstNeuLesen() { darstFeld.value = darstOption(gespeicherteDarstellung()); darstFolgen(); }
+  window.addEventListener("storage", (e) => { if (e.key === SCHLUESSEL_DARSTELLUNG || e.key === null) darstNeuLesen(); });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) darstNeuLesen(); });
+  grafik.setzeModus(darstJetzt);
+
+  // Nur Oberfläche: Pause, Eingabeart, kurze Meldungen der Physik-Vorführung, Probesalve
+  const spiel = {
+    pause: false,
+    meldung: null,           // { schluessel, werte } der Vorführung, übersetzt beim Zeichnen
+    meldungBis: 0,
+    meldungNr: 0,
+    uhr: 0,                  // Zeit in Sekunden (läuft in der Pause nicht)
+    salveOffen: 0,
+    salveUhr: 0,
+    salveNr: 0,
+    probenGesamt: 0,
+    probenDurch: 0,
+    tippen: matchMedia("(pointer: coarse)").matches,   // mit Finger bedient → Hinweise darauf abstimmen
+    zug: null,               // Abschuss per Ziehen: Ladung 0 bis 1, sonst null
+    autoPause: true,         // Fenster verlässt den Fokus: Pause (die Lichtprüfung schaltet das ab)
+  };
+
+  // Haken für die Lichtprüfung (lichtpruefung.js): vor jedem Schritt, nach jedem Bild
+  const haken = { vorSchritt: [], nachBild: [] };
+
+  // --- Hinweise -------------------------------------------------------------------
+
+  // Kurze Meldung der Vorführung (Probesalve, Physik wechseln, installiert); Spielmeldungen kommen aus z.band.
+  // Gemerkt werden Schlüssel und Werte, übersetzt wird beim Zeichnen (ein Sprachwechsel greift sofort).
+  function melde(schluessel, werte) {
+    spiel.meldung = { schluessel, werte: werte || null };
+    spiel.meldungBis = spiel.uhr + MELDUNG_DAUER;
+    spiel.meldungNr++;
+  }
+
+  // Meldung des Regelwerks übersetzen: Zahlen formatiert sprachen.js, "mission" und "rang" sind Schlüssel
+  function regelText(schluessel, werte) {
+    const w = {};
+    for (const k in werte || {}) {
+      const v = werte[k];
+      w[k] = k === "mission" ? T("mi_" + v) : k === "rang" ? T("rang_" + v) : v;
+    }
+    return T("m_" + schluessel, w);
+  }
+  const missionName = (m) => T("mi_" + m.schluessel);
+  const missionAufgabe = (m) => T("mi_" + m.schluessel + "_text");
+  const rangName = (schluessel) => T("rang_" + schluessel);
+
+  // Inhalt des Spruchbands: Meldung des Regelwerks oder der Vorführung, sonst Mission und Ziel.
+  // Der Schlüssel sagt der Grafik, ob es eine neue Zeile ist (weich überblenden) oder dieselbe mit
+  // neuer Zahl (an Ort und Stelle).
+  const band = { haupt: "", neben: "", art: "", schluessel: "", fortschritt: -1, marke: false };
+  function bandInhalt() {
+    const m = z.mission;
+    const name = missionName(m);
+    const missionZeile = T("band_mission", { n: m.nr, mission: name });
+    const stand = m.aktiv
+      ? (m.ziel > 1 ? T("band_stand", { aufgabe: missionAufgabe(m), n: m.fortschritt, m: m.ziel }) : missionAufgabe(m))
+      : T("band_kammer_startet");
+    // Unter einer Meldung steht, woran du gerade arbeitest
+    const ziel = m.aktiv ? stand : T("band_mission_kammer", { n: m.nr, mission: name });
+    band.fortschritt = m.aktiv && m.ziel > 0 && (z.phase === "bereit" || z.phase === "spiel") ? Math.min(1, m.fortschritt / m.ziel) : -1;
+    band.marke = false;
+    if (spiel.pause) {
+      band.haupt = T("pause");
+      band.neben = T(spiel.tippen ? "weiter_tippen" : "weiter_tasten");
+      band.art = "info";
+      band.schluessel = "pause";
+      band.fortschritt = -1;
+    } else if (spiel.meldung && spiel.uhr < spiel.meldungBis) {
+      band.haupt = T(spiel.meldung.schluessel, spiel.meldung.werte);
+      band.neben = "";
+      band.art = "info";
+      band.schluessel = "vorfuehrung:" + spiel.meldungNr + ":" + sprache;
+      band.fortschritt = -1;
+    } else if (z.phase === "ende") {
+      band.haupt = T("spiel_vorbei");
+      band.neben = z.neuerPlatz ? T("band_punkte_platz", { p: z.punkte, n: z.neuerPlatz }) : T("band_punkte", { p: z.punkte });
+      band.art = "";
+      band.schluessel = "ende";
+      band.fortschritt = -1;
+    } else if (z.band.schluessel) {
+      band.art = z.band.art;
+      const text = regelText(z.band.schluessel, z.band.werte);
+      if (z.band.art === "bonus") {
+        band.haupt = text;
+        band.neben = T("band_kugel_vorbei", { n: z.kugelNr, m: z.kugelnJeSpiel });
+        band.schluessel = "bonus";
+        band.fortschritt = -1;
+      } else {
+        band.haupt = text;
+        band.neben = z.phase === "bonus" ? "" : ziel;
+        band.schluessel = "regel:" + z.band.art + ":" + text;
+      }
+    } else {
+      band.art = "";
+      switch (z.phase) {
+        case "titel":
+          band.haupt = "Kugelblitz";
+          band.marke = true;
+          band.neben = T(spiel.tippen ? "band_titel_tippen" : "band_titel_tasten");
+          band.schluessel = "titel";
+          break;
+        case "bereit": {
+          band.haupt = missionZeile;
+          const skill = z.lichter.zielmarke >= 0 ? T("band_skill", { gasse: GASSEN[z.lichter.zielmarke] }) : "";
+          const los = T(spiel.tippen ? "band_los_tippen" : "band_los_tasten");
+          // in Chinesisch und Japanisch folgt auf den Satzpunkt kein Leerzeichen
+          band.neben = skill ? skill + (/[。！？]$/.test(skill) ? "" : " ") + los : los;
+          band.schluessel = "bereit:" + m.nr + ":" + z.lichter.zielmarke;
+          break;
+        }
+        default:
+          band.haupt = missionZeile;
+          band.neben = stand;
+          band.schluessel = "mission:" + m.nr + ":" + m.aktiv;
+      }
+    }
+    return band;
+  }
+
+  // --- Spielablauf ----------------------------------------------------------------
+
+  function neuesSpiel() {
+    tisch = new P.Tisch(bauplan, tisch.modus);
+    spiel.salveOffen = 0;
+    spiel.probenGesamt = 0;
+    spiel.probenDurch = 0;
+    spiel.pause = false;
+    spiel.meldung = null;
+    spiel.zug = null;
+    regeln.starte(tisch);          // schreibt ein laufendes Spiel in die Bestenliste und legt Kugel 1 auf die Rampe
+    flipperSetzen();
+  }
+
+  function imAbfluss(k) {
+    return regeln.imAbfluss(k);
+  }
+
+  function salveBeenden() {
+    spiel.salveOffen = 0;
+    tisch.kugeln = tisch.kugeln.filter((k) => !k.probe);
+  }
+
+  function abschiessen() {
+    // Probekugeln haben im laufenden Spiel nichts verloren
+    if (regeln.abschuss()) salveBeenden();
+  }
+
+  function schubsen(dx, dy) {
+    if (spiel.pause) return;
+    if (regeln.schubs(dx, dy)) flipperSetzen();
+  }
+
+  function salveStarten() {
+    if (spiel.pause || spiel.salveOffen > 0) return;
+    if (z.phase === "spiel" || z.phase === "bonus") return;
+    spiel.salveOffen = SALVE;
+    spiel.salveNr = 0;
+    spiel.salveUhr = 0;
+    melde("vf_salve", { n: SALVE, v: SALVE_TEMPO });
+  }
+
+  // Eine Probekugel senkrecht auf den ruhenden linken Flipper schießen. Der Startabstand
+  // wandert über eine ganze Schrittlänge der Lektion (9/60 = 0,15), damit jede Lage zum
+  // Takt einmal vorkommt; sonst fiele jede Kugel auf dieselbe, sichere Stelle.
+  function probeSchuss(nr) {
+    const f = tisch.flipper[0];
+    const w = f.ruheWinkel;
+    const richtung = new P.Vec2(Math.cos(w), Math.sin(w));
+    const t = 0.2 + 0.6 * (nr / (SALVE - 1));
+    const ziel = f.pos.clone().add(richtung, f.laenge * t);
+    const normale = richtung.perp();
+    if (normale.y < 0) normale.scale(-1);
+    const abstand = 0.32 + (SALVE_TEMPO / 60) * ((nr + 0.5) / SALVE);
+    const start = ziel.clone().add(normale, abstand);
+    const k = new P.Kugel(start, normale.clone().scale(-SALVE_TEMPO));
+    k.probe = true;
+    k.alter = 0;
+    tisch.kugeln.push(k);
+    spiel.probenGesamt++;
+  }
+
+  function physikWechseln() {
+    if (spiel.pause) return;
+    const neu = tisch.modus === "einzelschritt" ? "unterschritte" : "einzelschritt";
+    tisch.setzeModus(neu);
+    melde(neu === "einzelschritt" ? "vf_einzel" : "vf_unter");
+  }
+
+  function aktualisiere(sek) {
+    spiel.uhr += sek;
+    for (const f of haken.vorSchritt) f(sek);
+
+    if (spiel.salveOffen > 0) {
+      spiel.salveUhr -= sek;
+      if (spiel.salveUhr <= 0) {
+        probeSchuss(spiel.salveNr++);
+        spiel.salveOffen--;
+        spiel.salveUhr = SALVE_ABSTAND;
+      }
+    }
+
+    tisch.vorruecken(sek);
+
+    // Probekugeln, die durchgegangen sind, zählen (Anzeige „Probekugeln durch“)
+    for (const e of tisch.ereignisse) {
+      if (e.art === "durchschuss" && e.kugel.probe && !e.kugel.gezaehlt) {
+        e.kugel.gezaehlt = true;
+        spiel.probenDurch++;
+      }
+    }
+    // Die Grafik liest die Ereignisse (Treffer-Scheine, Spuren), die Regeln machen daraus Spielzüge
+    grafik.ereignisse(tisch.ereignisse, tisch, spiel.uhr);
+    regeln.schritt(sek, tisch.ereignisse);
+    tisch.ereignisse.length = 0;
+    flipperSetzen();      // Tilt und neue Kugel ändern, ob die Flipper dürfen
+
+    // Probekugeln: nach kurzer Zeit oder im Abfluss weg
+    tisch.kugeln = tisch.kugeln.filter((k) => {
+      if (!k.probe) return true;
+      k.alter += sek;
+      return !imAbfluss(k) && !k.ausgebrochen && k.alter < PROBE_LEBENSDAUER;
+    });
+  }
+
+  // --- Eingabe ------------------------------------------------------------------
+
+  const LINKS = new Set(["ShiftLeft", "ArrowLeft", "KeyZ"]);
+  const RECHTS = new Set(["ShiftRight", "ArrowRight", "Slash"]);
+  const ABSCHUSS = new Set(["Space", "ArrowDown"]);
+  const gehalten = new Set();         // gehaltene Tasten und Finger
+
+  function flipperSetzen() {
+    const darf = !z.tilt && !spiel.pause;
+    const links = [...gehalten].some((g) => LINKS.has(g) || g === "zeiger-links");
+    const rechts = [...gehalten].some((g) => RECHTS.has(g) || g === "zeiger-rechts");
+    tisch.flipper[0].gedrueckt = darf && links;
+    tisch.flipper[1].gedrueckt = darf && rechts;
+  }
+
+  function ladenBeginnen() {
+    if (spiel.pause) return;
+    regeln.laden(true);
+  }
+
+  function allesLoslassen() {
+    gehalten.clear();
+    zeiger.clear();
+    zuege.clear();
+    spiel.zug = null;
+    regeln.ladenAbbrechen();
+    flipperSetzen();
+  }
+
+  function pausierbar() {
+    return z.phase === "bereit" || z.phase === "spiel" || z.phase === "bonus";
+  }
+
+  function pause(an) {
+    if (an && !pausierbar()) return;
+    spiel.pause = an;
+    if (an) allesLoslassen();
+    else flipperSetzen();
+  }
+
+  // Flipper drücken und loslassen (Tasten, Finger und die Lichtprüfung gehen hier durch)
+  function flipperDruck(code) {
+    if (!gehalten.has(code) && !spiel.pause) regeln.flipperTaste(LINKS.has(code) || code === "zeiger-links" ? 0 : 1);
+    gehalten.add(code);
+    flipperSetzen();
+  }
+  function flipperLos(code) {
+    gehalten.delete(code);
+    flipperSetzen();
+  }
+
+  const SPIELTASTEN = new Set([...LINKS, ...RECHTS, ...ABSCHUSS,
+    "ArrowUp", "KeyX", "Period", "F2", "Enter", "KeyP", "Escape", "KeyT", "KeyB"]);
+  // Diese Tasten bedienen Regler, Auswahl und Knöpfe selbst, wenn einer davon den Fokus hat
+  const BEDIENTASTEN = new Set(["Space", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
+  const bedienteil = (el) => (el && el.closest ? el.closest("input, button, select, textarea, summary") : null);
+
+  window.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.altKey || e.metaKey) return;   // Strg+P druckt, Alt+← geht zurück
+    if (!SPIELTASTEN.has(e.code)) return;
+    const feld = bedienteil(e.target);
+    if (feld && BEDIENTASTEN.has(e.code)) return;
+    if (feld && e.code === "Escape") feld.blur();
+    e.preventDefault();
+    spiel.tippen = false;
+    if (LINKS.has(e.code) || RECHTS.has(e.code)) {
+      // Jede neu gedrückte Flippertaste schiebt auch die Lichter der Gassen oben
+      if (!e.repeat) flipperDruck(e.code);
+      else { gehalten.add(e.code); flipperSetzen(); }
+      return;
+    }
+    if (ABSCHUSS.has(e.code)) {
+      if (!e.repeat) ladenBeginnen();
+      return;
+    }
+    if (e.repeat) return;
+    switch (e.code) {
+      case "KeyX": schubsen(SCHUBS, 0); break;
+      case "Period": schubsen(-SCHUBS, 0); break;
+      case "ArrowUp": schubsen(0, SCHUBS); break;
+      case "F2": neuesSpiel(); break;
+      case "Enter":
+        if (z.phase === "titel" || z.phase === "ende") neuesSpiel();
+        else if (z.phase === "bonus") regeln.ueberspringeBonus();
+        break;
+      case "KeyP":
+      case "Escape":
+        pause(!spiel.pause);
+        break;
+      case "KeyT": physikWechseln(); break;
+      case "KeyB": salveStarten(); break;
+    }
+  });
+
+  window.addEventListener("keyup", (e) => {
+    if (!SPIELTASTEN.has(e.code)) return;
+    if (LINKS.has(e.code) || RECHTS.has(e.code)) {
+      if (!(e.ctrlKey || e.altKey || e.metaKey)) e.preventDefault();
+      flipperLos(e.code);
+      return;
+    }
+    if (bedienteil(e.target) && BEDIENTASTEN.has(e.code)) return;
+    if (!(e.ctrlKey || e.altKey || e.metaKey)) e.preventDefault();
+    if (ABSCHUSS.has(e.code) && z.laedt) abschiessen();
+  });
+
+  // Zeiger (Maus, Finger): linke Hälfte = linker Flipper, rechte Hälfte = rechter, Rampe = Abschuss
+  // (halten und loslassen oder nach unten ziehen wie am Abzug). Jeder Finger wird einzeln verfolgt.
+  // Vor und nach einem Spiel startet Tippen ein neues, in der Pause geht es damit weiter, im Bonus
+  // zählt es ihn zu Ende.
+  const zeiger = new Map();
+  const zuege = new Map();
+  function cssPunkt(e) {
+    const r = leinwand.getBoundingClientRect();
+    const l = grafik.lay;
+    return { x: (e.clientX - r.left) * (l.b / r.width), y: (e.clientY - r.top) * (l.h / r.height) };
+  }
+  function rampeBelegt() {
+    return tisch.kugeln.some((k) => !k.probe && regeln.inRampe(k));
+  }
+  leinwand.addEventListener("pointerdown", (e) => {
+    spiel.tippen = e.pointerType !== "mouse" || spiel.tippen;
+    // Wer auf den Tisch tippt, will spielen: ein Regler oder Knopf mit Fokus gibt ihn ab
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    if (z.phase === "titel" || z.phase === "ende") { neuesSpiel(); return; }
+    if (spiel.pause) { pause(false); return; }
+    if (z.phase === "bonus") { regeln.ueberspringeBonus(); return; }
+    try { leinwand.setPointerCapture(e.pointerId); } catch { /* egal */ }
+    const p = cssPunkt(e);
+    const x = grafik.zuTisch(p.x, p.y).x;
+    const finger = e.pointerType !== "mouse";
+    let rolle;
+    if (x > bauplan.rampe.xMin - 0.02 || (finger && rampeBelegt() && x > 0.93)) {
+      rolle = "abschuss";
+      zuege.set(e.pointerId, { startY: p.y, aktiv: false });
+      ladenBeginnen();
+    } else {
+      rolle = x < 0.5 ? "zeiger-links" : "zeiger-rechts";
+    }
+    zeiger.set(e.pointerId, rolle);
+    if (rolle !== "abschuss") {
+      // der erste Finger auf dieser Seite schiebt auch die Gassenlichter
+      if ([...zeiger.values()].filter((r) => r === rolle).length === 1) flipperDruck(rolle);
+      else { gehalten.add(rolle); flipperSetzen(); }
+    }
+  });
+  leinwand.addEventListener("pointermove", (e) => {
+    const zg = zuege.get(e.pointerId);
+    if (!zg || spiel.pause) return;
+    const dy = cssPunkt(e).y - zg.startY;
+    if (!zg.aktiv && dy > 10 && rampeBelegt()) { zg.aktiv = true; regeln.ladenAbbrechen(); }
+    if (zg.aktiv) spiel.zug = Math.max(0, Math.min(1, (dy - 10) / (grafik.lay.hp * 0.16)));
+  });
+  function zeigerEnde(e) {
+    const rolle = zeiger.get(e.pointerId);
+    if (!rolle) return;
+    zeiger.delete(e.pointerId);
+    if (rolle === "abschuss") {
+      const zg = zuege.get(e.pointerId);
+      zuege.delete(e.pointerId);
+      if (zg && zg.aktiv) {
+        const l = spiel.zug || 0;
+        spiel.zug = null;
+        if (e.type === "pointerup" && l > 0.02 && regeln.abschuss(l)) salveBeenden();
+      } else if (z.laedt) {
+        if (e.type === "pointerup") abschiessen(); else regeln.ladenAbbrechen();
+      }
+      return;
+    }
+    if (![...zeiger.values()].includes(rolle)) flipperLos(rolle);
+  }
+  leinwand.addEventListener("pointerup", zeigerEnde);
+  leinwand.addEventListener("pointercancel", zeigerEnde);
+  leinwand.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // Knöpfe: Neues Spiel (auf der Tafel), Schubsen und Pause (unter dem Tisch)
+  knopfNeu.addEventListener("click", () => { knopfNeu.blur(); neuesSpiel(); });
+  const knopf = (id, tun) => $(id).addEventListener("click", () => { spiel.tippen = true; tun(); });
+  knopf("schubs-links", () => schubsen(-SCHUBS, 0));
+  knopf("schubs-rechts", () => schubsen(SCHUBS, 0));
+  knopf("schubs-hoch", () => schubsen(0, SCHUBS));
+  knopf("knopf-pause", () => pause(!spiel.pause));
+
+  window.addEventListener("blur", () => {
+    if (!spiel.autoPause) return;
+    if (pausierbar()) pause(true); else allesLoslassen();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden || !spiel.autoPause) return;
+    if (pausierbar()) pause(true); else allesLoslassen();
+  });
+
+  // Tastenbeschriftung passend zur eigenen Tastatur (z. B. Y statt Z auf deutschem Layout). Die Karte wird gemerkt,
+  // weil die Tasten-Kachel bei jedem Sprachwechsel neu entsteht.
+  let tastenKarte = null;
+  if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
+    navigator.keyboard.getLayoutMap().then((karte) => { tastenKarte = karte; tastenBauen(); }).catch(() => {});
+  }
+
+  // Text mit Tasten: Platzhalter wie {leer} oder {f2} werden zu <kbd>, alles andere bleibt Text
+  const KBD = {
+    shift: () => T("kbd_shift"), leer: () => T("kbd_leer"), enter: () => T("kbd_enter"), esc: () => T("kbd_esc"),
+    links: "←", rechts: "→", hoch: "↑", runter: "↓", f2: "F2", p: "P", t: "T", b: "B",
+    z: ["KeyZ", "Z"], slash: ["Slash", "/"], x: ["KeyX", "X"], punkt: ["Period", "."],
+  };
+  function mitTasten(el, vorlage) {
+    el.textContent = "";
+    for (const teil of vorlage.split(/(\{\w+\})/)) {
+      const m = /^\{(\w+)\}$/.exec(teil);
+      const def = m ? KBD[m[1]] : undefined;
+      if (def !== undefined) {
+        const k = document.createElement("kbd");
+        if (Array.isArray(def)) {
+          k.dataset.code = def[0];
+          const zeichen = tastenKarte && tastenKarte.get(def[0]);
+          k.textContent = zeichen ? zeichen.toUpperCase() : def[1];
+        } else k.textContent = typeof def === "function" ? def() : def;
+        el.appendChild(k);
+      } else if (teil) el.appendChild(document.createTextNode(teil));
+    }
+  }
+  // Zeilen der Tasten-Kachel: Begriff und Vorlage (mit @ ein übersetzter Text, sonst nur Tasten)
+  const TASTEN_ZEILEN = [
+    ["taste_flipper_l", "{shift} {links} {z}"],
+    ["taste_flipper_r", "{shift} {rechts} {slash}"],
+    ["taste_gassen", "@taste_gassen_wert"],
+    ["taste_abschuss", "@taste_abschuss_wert"],
+    ["taste_schubsen", "{x} {punkt} {hoch}"],
+    ["neues_spiel", "@taste_neu_wert"],
+    ["pause", "@taste_pause_wert"],
+    ["bonus", "@taste_bonus_wert"],
+    ["taste_finger", "@taste_finger_wert"],
+  ];
+  function tastenBauen() {
+    const liste = $("tasten-liste");
+    liste.textContent = "";
+    for (const [begriff, vorlage] of TASTEN_ZEILEN) {
+      const tr = document.createElement("tr");
+      const a = document.createElement("td");
+      const b = document.createElement("td");
+      a.textContent = T(begriff);
+      mitTasten(b, vorlage.startsWith("@") ? T(vorlage.slice(1)) : vorlage);
+      tr.append(a, b);
+      liste.appendChild(tr);
+    }
+    mitTasten($("physik-hinweis"), T("ph_hinweis"));
+  }
+
+  // --- Sprache wechseln -----------------------------------------------------------------
+  // Sofort und still: Texte tauschen, Tisch-Beschriftungen und Tafel neu bauen, das Spruchband blendet weich über.
+  // Kein Neuladen, kein Aufleuchten.
+  const auswahl = $("sprache");
+  for (const s of SP.SPRACHEN) {
+    const o = document.createElement("option");
+    o.value = s.code;
+    o.lang = s.code;
+    o.textContent = s.name;
+    auswahl.appendChild(o);
+  }
+  function setzeSprache(code, merken) {
+    sprache = SP.TEXTE[code] ? code : "en";
+    if (merken) schreibe(SP.SCHLUESSEL_SPEICHER, sprache);
+    window.kbDokumentSprache(sprache);
+    for (const el of document.querySelectorAll("[data-i]")) el.textContent = T(el.dataset.i);
+    for (const el of document.querySelectorAll("[data-i-aria]")) el.setAttribute("aria-label", T(el.dataset.iAria));
+    auswahl.value = sprache;
+    tastenBauen();
+    einstellungenAnwenden();
+    const s = SP.sprache(sprache);
+    grafik.setzeSprache({
+      code: sprache, t: T, zahl, dezimal: (n, stellen) => SP.dezimal(sprache, n, stellen),
+      richtung: s.dir, schriftTitel: s.schriftTitel, schriftText: s.schriftText,
+    });
+    // alles neu schreiben, was anzeigen() sonst nur bei Änderung anfasst
+    for (const k of Object.keys(zuletzt)) delete zuletzt[k];
+    platzReservieren();
+  }
+  auswahl.addEventListener("change", () => { setzeSprache(auswahl.value, true); fokusAbgeben(auswahl); });
+
+  // --- Installieren (Muster Pocketsum 1.1) -------------------------------------------------
+  // Der Knopf erscheint erst, wenn der Browser die Installation anbietet (das Ereignis hebt der Kopf der Seite auf),
+  // und öffnet dann dessen Dialog. Ein Ereignis reicht für einen Dialog; wer abbricht, sieht den Knopf wieder, sobald
+  // der Browser ein neues schickt. In der installierten App (Vollbild, eigenes Fenster) bleibt er weg.
+  function alsApp() {
+    return ["fullscreen", "standalone", "minimal-ui"].some((m) => matchMedia("(display-mode: " + m + ")").matches) || navigator.standalone === true;
+  }
+  const knopfInstall = $("installieren");
+  function zeigeInstall() { knopfInstall.hidden = !(window.kbInstall && !alsApp()); }
+  window.kbInstallZeigen = zeigeInstall;
+  knopfInstall.addEventListener("click", () => {
+    const e = window.kbInstall;
+    window.kbInstall = null;
+    zeigeInstall();
+    if (!e) return;
+    try { const p = e.prompt(); if (p && p.catch) p.catch(() => {}); } catch { /* egal */ }
+  });
+  window.addEventListener("appinstalled", () => {
+    window.kbInstall = null;
+    zeigeInstall();
+    melde("installiert");
+    ansagen(T("installiert"));
+  });
+
+  // --- Größe ----------------------------------------------------------------------
+
+  let groesseSchluessel = "";
+  function groesseAnpassen() {
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const finger = matchMedia("(pointer: coarse)").matches;
+    const leiste = vw <= 760 || finger ? 58 : 0;
+    let maxB;
+    let maxH;
+    if (vw <= 760) { maxB = vw - 32; maxH = vh - 20 - 48 - leiste; }
+    else if (vw >= 1200) { maxB = vw - 2 * 286 - 2 * 24 - 32; maxH = vh - 32 - leiste; }
+    else if (vw >= 900) { maxB = vw - 2 * 232 - 24 - 24 - 32; maxH = vh - 32 - leiste; }
+    else { maxB = vw - 280 - 24 - 32; maxH = vh - 32 - leiste; }
+    const lay = G.passendesLayout(Math.max(220, maxB), Math.max(380, maxH));
+    const dpr = window.devicePixelRatio || 1;
+    const schl = lay.wp + "|" + dpr;
+    if (schl === groesseSchluessel) return;
+    groesseSchluessel = schl;
+    grafik.setzeGroesse(lay, dpr);
+    platte.style.width = lay.b + "px";
+    platte.style.height = lay.h + "px";
+  }
+  let groesseWarten = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(groesseWarten);
+    groesseWarten = setTimeout(() => { groesseAnpassen(); platzReservieren(); }, 90);
+  });
+
+  // Platz für wechselnde Texte (Prüfrunde Befund 5, jetzt für alle Sprachen): Jede Zeile einer Kachel, deren Text im
+  // Spiel wechselt, bekommt so viel Mindesthöhe, wie ihr längster möglicher Text in dieser Sprache und Breite braucht.
+  // So rutscht in keiner Sprache eine Kachel, wenn etwa „Zündkammer: nichts leuchtet“ zu „… Gewittersturm starten“ wird.
+  function wechselTexte() {
+    const n = R.RAENGE.length;
+    return {
+      kugel: [T("kein_spiel"), T("spiel_vorbei"), T("kugel_von", { n: 3, m: 3 })],
+      extraball: ["xb_gewonnen", "xb_leuchtet", "xb_eingeloest", "xb_regel"].map((k) => T(k)).concat(T("xb_stand", { n: 3 })),
+      "rang-name": R.RAENGE.map(rangName),
+      "rang-text": R.RAENGE.map((r, i) => (i + 1 < n ? T("rang_stand", { n: i + 1, m: n, rang: rangName(R.RAENGE[i + 1]) }) : T("rang_stand_max", { n, m: n }))),
+      "mission-nr": [T("mission_von", { n: 5, m: 5 }), T("mission_von_runde", { n: 5, m: 5, r: 9 })],
+      "mission-name": R.MISSIONEN.map(missionName),
+      "mission-text": R.MISSIONEN.map(missionAufgabe),
+      "mission-stand": [T("mission_stand", { n: 15, m: 15 }), T("mission_startet_abschuss"), T("mission_startet_kammer")],
+      kammer: ["kammer_extraball", "kammer_multiball", "kammer_mission", "kammer_nichts"].map((k) => T("kammer", { was: T(k) }))
+        .concat(T("kammer", { was: T("kammer_jackpot", { p: 150000 }) })),
+    };
+  }
+  function platzReservieren() {
+    const mess = document.createElement("div");
+    mess.setAttribute("aria-hidden", "true");
+    mess.style.cssText = "position:absolute;left:-10000px;top:0;visibility:hidden;";
+    document.body.appendChild(mess);
+    for (const [id, texte] of Object.entries(wechselTexte())) {
+      const el = $(id);
+      el.style.minHeight = "";
+      if (!el.clientWidth) continue;
+      const cs = getComputedStyle(el);
+      for (const eig of ["font", "lineHeight", "letterSpacing", "hyphens", "overflowWrap", "wordBreak", "lineBreak", "fontVariantNumeric"]) mess.style[eig] = cs[eig];
+      mess.style.width = el.clientWidth + "px";
+      mess.lang = document.documentElement.lang;
+      let hoch = 0;
+      for (const t of texte) {
+        mess.textContent = t;
+        hoch = Math.max(hoch, mess.getBoundingClientRect().height);
+      }
+      el.style.minHeight = Math.ceil(hoch) + "px";
+    }
+    mess.remove();
+  }
+  // Pixeldichte ändert sich (Fenster auf einen anderen Bildschirm gezogen, Zoom): neu backen
+  let dprAbfrage = null;
+  function dprBeobachten() {
+    if (dprAbfrage) dprAbfrage.removeEventListener("change", dprGeaendert);
+    dprAbfrage = matchMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)");
+    dprAbfrage.addEventListener("change", dprGeaendert);
+  }
+  function dprGeaendert() { groesseAnpassen(); dprBeobachten(); }
+  dprBeobachten();
+
+  // --- Anzeige ------------------------------------------------------------------
+
+  const zuletzt = {};
+  function setze(id, wert) {
+    if (weich[id]) { weichSetzen(weich[id], wert, performance.now() / 1000); return; }
+    if (zuletzt[id] === wert) return;
+    zuletzt[id] = wert;
+    $(id).textContent = wert;
+  }
+  function klasse(el, schl, name, an) {
+    const k = schl + name;
+    if (zuletzt[k] === an) return;
+    zuletzt[k] = an;
+    el.classList.toggle(name, an);
+  }
+
+  // Datum der Bestenliste in der Schreibweise der Sprache; Einträge ohne Datum (alter Rekord) heißen „früher“
+  function datumText(d) { return SP.datum(sprache, d) || T("liste_frueher"); }
+
+  function bestenlisteZeigen() {
+    const schluessel = JSON.stringify([z.bestenliste, z.neuerPlatz, z.phase === "ende", sprache]);
+    if (zuletzt.bestenliste === schluessel) return;
+    zuletzt.bestenliste = schluessel;
+    const ol = $("bestenliste");
+    ol.textContent = "";
+    for (let i = 0; i < R.KONST.BESTENLISTE; i++) {
+      const e = z.bestenliste[i];
+      const li = document.createElement("li");
+      if (!e) li.className = "leer";
+      else if (z.phase === "ende" && z.neuerPlatz === i + 1) li.className = "neu";
+      const teile = e ? [["platz", (i + 1) + "."], ["punkte", zahl(e.punkte)], ["datum", datumText(e.datum)]]
+        : [["platz", (i + 1) + "."], ["punkte", T("liste_frei")], ["datum", ""]];
+      for (const [k, text] of teile) {
+        const s = document.createElement("span");
+        s.className = k;
+        s.textContent = text;
+        li.appendChild(s);
+      }
+      ol.appendChild(li);
+    }
+  }
+
+  // Zahlen, die sich oft ändern (Prüfrunde, Abschnitt 4): Vorher zählten die Punkte mit jedem Bild hoch, die
+  // letzten Ziffern wechselten bis zu 60 Mal je Sekunde. Jetzt wechselt eine solche Zahl höchstens alle 0,5 s, zeigt
+  // dann immer den neuesten Stand (was dazwischen lag, wird verworfen) und blendet in 0,16 s weich über.
+  const ZAHL_HALTEN = 0.5;
+  function weicheZahl(id) {
+    const el = $(id);
+    const start = el.textContent;
+    el.textContent = "";
+    el.classList.add("weich");
+    const vorne = document.createElement("span");
+    const hinten = document.createElement("span");
+    vorne.textContent = start;
+    hinten.setAttribute("aria-hidden", "true");
+    hinten.style.opacity = "0";
+    el.append(vorne, hinten);
+    return { vorne, hinten, text: start, seit: -9 };
+  }
+  function weichSetzen(w, text, jetzt) {
+    if (text === w.text || jetzt - w.seit < ZAHL_HALTEN) return;
+    w.seit = jetzt;
+    w.text = text;
+    const alt = w.vorne;
+    const neu = w.hinten;
+    neu.textContent = text;
+    for (const s of [alt, neu]) for (const a of s.getAnimations()) a.cancel();
+    const blende = { duration: 160, easing: "ease-in-out", fill: "forwards" };
+    if (neu.animate) {
+      neu.animate([{ opacity: 0 }, { opacity: 1 }], blende);
+      alt.animate([{ opacity: 1 }, { opacity: 0 }], blende);
+    } else {
+      neu.style.opacity = "1";
+      alt.style.opacity = "0";
+    }
+    alt.setAttribute("aria-hidden", "true");
+    neu.removeAttribute("aria-hidden");
+    w.vorne = neu;
+    w.hinten = alt;
+  }
+  // Alle Texte in den Kacheln, die sich im Spiel ändern, wechseln so (setze erkennt sie an der Kennung)
+  const weich = {};
+  for (const id of ["punkte", "kopf-punkte", "bonus", "mission-stand", "kugel", "kopf-kugel", "extraball", "rang-name",
+    "kopf-rang", "rang-text", "mission-nr", "mission-name", "mission-text", "kammer"]) weich[id] = weicheZahl(id);
+
+  function ansagen(text) { $("ansage").textContent = text; }
+
+  let letzteAnsage = -1;
+  let letzterZustand = "";
+  let zeitenUhr = 0;
+  function anzeigen(sek) {
+    const imSpiel = z.phase !== "titel" && z.phase !== "ende";
+    const p = zahl(z.punkte);
+    setze("punkte", p);
+    setze("kopf-punkte", p);
+    setze("rekord", zahl(z.rekord));
+
+    // Kugel
+    const kugelText = imSpiel ? T("kugel_von", { n: z.kugelNr, m: z.kugelnJeSpiel }) : T(z.phase === "ende" ? "spiel_vorbei" : "kein_spiel");
+    setze("kugel", kugelText);
+    setze("kopf-kugel", kugelText);
+    const pips = $("kugelreihe").children;
+    for (let i = 0; i < pips.length; i++) {
+      klasse(pips[i], "pip" + i, "weg", imSpiel ? i < z.kugelNr - 1 : z.phase === "ende");
+      klasse(pips[i], "pip" + i, "jetzt", imSpiel && i === z.kugelNr - 1);
+    }
+    const st = z.statistik || {};
+    setze("extraball", z.extraBaelle > 0
+      ? T("xb_gewonnen")
+      : z.extraballBereit
+        ? T("xb_leuchtet")
+        : st.extraBaelle > 0
+          ? T("xb_eingeloest")
+          : imSpiel
+            ? T("xb_stand", { n: Math.min(3, z.banken) })
+            : T("xb_regel"));
+
+    // Rang
+    const rang = rangName(z.rang.schluessel);
+    setze("rang-name", rang);
+    setze("kopf-rang", rang);
+    const stufen = $("rang-leiter").children;
+    for (let i = 0; i < stufen.length; i++) {
+      klasse(stufen[i], "rang" + i, "an", i < z.rang.nr);
+      klasse(stufen[i], "rang" + i, "jetzt", i === z.rang.nr - 1);
+    }
+    setze("rang-text", z.rang.nr < R.RAENGE.length
+      ? T("rang_stand", { n: z.rang.nr, m: R.RAENGE.length, rang: rangName(R.RAENGE[z.rang.nr]) })
+      : T("rang_stand_max", { n: z.rang.nr, m: R.RAENGE.length }));
+
+    // Mission
+    const m = z.mission;
+    const runde = Math.floor(m.erfuellt / R.MISSIONEN.length) + 1;
+    setze("mission-nr", runde > 1
+      ? T("mission_von_runde", { n: m.nr, m: R.MISSIONEN.length, r: runde })
+      : T("mission_von", { n: m.nr, m: R.MISSIONEN.length }));
+    setze("mission-name", missionName(m));
+    setze("mission-text", missionAufgabe(m));
+    const anteil = m.aktiv ? Math.min(1, m.fortschritt / m.ziel) : 0;
+    if (zuletzt.balken !== anteil) { zuletzt.balken = anteil; $("mission-balken").style.width = (anteil * 100).toFixed(0) + "%"; }
+    setze("mission-stand", m.aktiv
+      ? T("mission_stand", { n: m.fortschritt, m: m.ziel })
+      : T(m.erfuellt === 0 && !imSpiel ? "mission_startet_abschuss" : "mission_startet_kammer"));
+
+    // Bonus und Multiplikator
+    const imBonus = z.phase === "bonus" && z.bonus.aktiv && !z.bonus.tilt;
+    setze("bonus", imBonus ? zahl(z.bonus.zaehler) : zahl(z.bonusLaufend));
+    const mult = $("mult").children;
+    for (let i = 0; i < mult.length; i++) klasse(mult[i], "mult" + i, "an", i < z.multiplikator);
+    setze("mult-text", T("mult_vorlesen", { n: z.multiplikator }));
+    const wahl = z.lichter.zuendkammer;
+    setze("kammer", T("kammer", { was: wahl === "jackpot" ? T("kammer_jackpot", { p: z.multiball.jackpot })
+      : T(wahl === "extraball" || wahl === "multiball" || wahl === "mission" ? "kammer_" + wahl : "kammer_nichts") }));
+
+    bestenlisteZeigen();
+
+    // Physik und Zeichenzeit: höchstens zweimal je Sekunde neu (die Zahl der Unterschritte wechselte vorher mit jedem Bild)
+    const einzel = tisch.modus === "einzelschritt";
+    setze("modus", T(einzel ? "ph_einzelschritt" : "ph_unterschritte"));
+    setze("modus-text", einzel
+      ? T("ph_text_einzel", { a: 2, b: SP.dezimal(sprache, 3.6, 1) })
+      : T("ph_text_unter", { prozent: SP.prozent(sprache, 40) }));
+    zeitenUhr += sek;
+    if (zeitenUhr > 0.5) {
+      zeitenUhr = 0;
+      setze("schritte", tisch.statistik.unterschritte ? zahl(tisch.statistik.unterschritte) : T("ph_noch_keine"));
+      setze("tempo", SP.dezimal(sprache, tisch.statistik.hoechstesTempo, 1));
+      setze("durchschuesse", zahl(tisch.statistik.durchschuesse));
+      setze("ausbrueche", zahl(tisch.statistik.ausbrueche));
+      setze("proben", spiel.probenGesamt ? T("ph_von", { n: spiel.probenDurch, m: spiel.probenGesamt }) : T("ph_keine"));
+      const zt = grafik.zeichenzeiten();
+      setze("zeit-mittel", zt.n ? SP.dezimal(sprache, zt.mittel, 2) + " ms" : T("ph_noch_keine"));
+      setze("zeit-p95", zt.n ? SP.dezimal(sprache, zt.p95, 2) + " ms" : T("ph_noch_keine"));
+    }
+
+    // Knopf „Neues Spiel“ über der Tafel im Canvas
+    const k = grafik.knopf();
+    if (k) {
+      if (knopfNeu.hidden) knopfNeu.hidden = false;
+      const lage = k.x + "|" + k.y + "|" + k.b + "|" + k.h;
+      if (zuletzt.knopf !== lage) {
+        zuletzt.knopf = lage;
+        knopfNeu.style.left = k.x + "px";
+        knopfNeu.style.top = k.y + "px";
+        knopfNeu.style.width = k.b + "px";
+        knopfNeu.style.height = k.h + "px";
+      }
+      const sichtbar = grafik.tafelSichtbar().toFixed(2);
+      if (zuletzt.knopfAlpha !== sichtbar) { zuletzt.knopfAlpha = sichtbar; knopfNeu.style.opacity = sichtbar; }
+      // Blendet die Tafel aus, blendet der Knopf mit aus (vorher verschwand er sofort); bedienbar ist er dann nicht mehr
+      const aktiv = grafik.tafelAktiv();
+      if (knopfNeu.inert === aktiv) {
+        if (!aktiv && document.activeElement === knopfNeu) knopfNeu.blur();
+        knopfNeu.inert = !aktiv;
+      }
+    } else if (!knopfNeu.hidden) {
+      knopfNeu.hidden = true;
+      zuletzt.knopfAlpha = "";
+    }
+
+    // Bildschirmleser: neue Meldungen ansagen (nicht jeden Schritt der Bonuszählung), dazu Pause und Spielende,
+    // die nur die Seite kennt
+    if (z.band.nr !== letzteAnsage) {
+      letzteAnsage = z.band.nr;
+      if (z.band.schluessel && z.band.art !== "bonus") ansagen(regelText(z.band.schluessel, z.band.werte));
+    }
+    const zustand = spiel.pause ? "pause" : z.phase === "ende" ? "ende" : "";
+    if (zustand !== letzterZustand) {
+      if (zustand === "pause") ansagen(T(spiel.tippen ? "ansage_pause_tippen" : "ansage_pause_tasten"));
+      else if (zustand === "ende") ansagen(z.neuerPlatz ? T("ansage_ende_platz", { p: z.punkte, n: z.neuerPlatz }) : T("ansage_ende", { p: z.punkte }));
+      else if (letzterZustand === "pause") ansagen(T("ansage_weiter"));
+      letzterZustand = zustand;
+    }
+  }
+
+  // --- Hauptschleife ----------------------------------------------------------------
+
+  const ui = { uhr: 0, ladung: 0, tippen: false, band: null, ueberlagerung: "", tafel: {} };
+  const tafelDaten = { punkte: 0, platz: 0, rekord: 0 };
+  function uiZustand() {
+    ui.uhr = spiel.uhr;
+    ui.ladung = spiel.zug !== null ? spiel.zug : z.ladung;
+    ui.tippen = spiel.tippen;
+    ui.band = bandInhalt();
+    ui.ueberlagerung = spiel.pause ? "pause" : z.phase === "titel" ? "titel" : z.phase === "ende" ? "ende" : "";
+    tafelDaten.punkte = z.phase === "ende" ? z.punkte : 0;
+    tafelDaten.platz = z.phase === "ende" ? z.neuerPlatz : 0;
+    tafelDaten.rekord = z.phase === "titel" ? z.rekord : 0;
+    ui.tafel = tafelDaten;
+    return ui;
+  }
+
+  let letzteZeit = null;
+  function bild(zeit) {
+    const sek = letzteZeit === null ? 0 : (zeit - letzteZeit) / 1000;
+    letzteZeit = zeit;
+    if (!spiel.pause) aktualisiere(sek);
+    grafik.zeichne(tisch, z, uiZustand());
+    anzeigen(sek);
+    for (const f of haken.nachBild) f(zeit);
+    requestAnimationFrame(bild);
+  }
+
+  setzeSprache(sprache, false);
+  zeigeInstall();
+  groesseAnpassen();
+  requestAnimationFrame(bild);
+
+  // Offline und installierbar: Service Worker (sw.js). Unter file:// (Doppelklick) meldet sich keiner an, das Spiel
+  // läuft dort trotzdem vollständig.
+  if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("./sw.js").catch(() => {});
+
+  // Fraunces geladen: Schrift auf den Inserts neu backen, Platz der Kacheltexte neu messen
+  if (document.fonts && document.fonts.load) {
+    Promise.all([
+      document.fonts.load('560 20px "Fraunces Kugelblitz"'),
+      document.fonts.load('600 20px "Fraunces Kugelblitz"'),
+    ]).then(() => { grafik.neuBacken(); platzReservieren(); }).catch(() => {});
+  }
+
+  // Für Tests, die Lichtprüfung und zum Nachsehen in der Konsole
+  window.kugelblitz = {
+    spiel, regeln, z, grafik, haken, P, R,
+    get tisch() { return tisch; },
+    neuesSpiel, pause, schubsen, flipperDruck, flipperLos, setzeSprache, SP,
+    get sprache() { return sprache; },
+    get darstellung() { return darstJetzt; },
+    darstFolgen,
+    zeichenzeiten: () => grafik.zeichenzeiten(),
+  };
+
+  // Lichtprüfung: index.html?licht=1 spielt ein Drehbuch ab und misst jedes Bild, ?licht=frei&sek=180 lässt einen
+  // Automaten frei spielen und misst dabei (Abschnitt 4), ?licht=modi wechselt die Darstellung (Abschnitt 7),
+  // ?licht=werkzeug lädt nur die Werkzeuge
+  const lichtModus = new URLSearchParams(location.search).get("licht");
+  if (lichtModus === "1" || lichtModus === "frei" || lichtModus === "modi" || lichtModus === "werkzeug") {
+    const s = document.createElement("script");
+    s.src = "lichtpruefung.js";
+    document.body.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>

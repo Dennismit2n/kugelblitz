@@ -1,0 +1,20 @@
+{
+  "name": "Kugelblitz",
+  "short_name": "Kugelblitz",
+  "description": "Flipper im Browser: fünf Missionen, Multiball, Bestenliste. Dunkel, ohne Ton, ohne Blitze, auch offline. Pinball in your browser, dark, silent, no flashing, works offline.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0F0F21",
+  "theme_color": "#0F0F21",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ]
+}

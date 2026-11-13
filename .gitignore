@@ -1,0 +1,20 @@
+# Private Arbeitsnotizen, alte Geschichte und Bau-Doku
+_intern/
+
+# Rohbilder der Fotos (werkzeuge/foto.mjs schreibt PNG, in docs/ liegen nur die WebP-Fassungen)
+docs/*.png
+
+# Ausgaben der Werkzeuge
+max-vorher.png
+max-nachher.png
+
+# Node
+node_modules/
+
+# Betriebssystem
+Thumbs.db
+desktop.ini
+*.log
+
+# Claude-Code-Einstellungen
+.claude/

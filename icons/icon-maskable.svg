@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Kugelblitz für Masken (Android, iOS): randlos, alles Wichtige im sicheren Kreis (Radius 40 %), ohne Schrauben,
+       die eine runde oder abgerundete Maske abschneiden würde. Sonst wie icon.svg. -->
+  <defs>
+    <linearGradient id="platte" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232248"/>
+      <stop offset=".5" stop-color="#19183A"/>
+      <stop offset="1" stop-color="#0F0F21"/>
+    </linearGradient>
+    <radialGradient id="aurora1" cx=".18" cy=".12" r=".6">
+      <stop offset="0" stop-color="#4B3CAB" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#4B3CAB" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aurora2" cx=".92" cy=".22" r=".55">
+      <stop offset="0" stop-color="#015BA6" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#015BA6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="schatten" cx=".5" cy=".5" r=".5">
+      <stop offset=".55" stop-color="#000" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="chrom" cx=".66" cy=".3" r=".96" fx=".66" fy=".3">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset=".07" stop-color="#FFFFFF"/>
+      <stop offset=".22" stop-color="#BDB8E6"/>
+      <stop offset=".5" stop-color="#6E68A4"/>
+      <stop offset=".56" stop-color="#26234B"/>
+      <stop offset="1" stop-color="#4A4680"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFCEE"/>
+      <stop offset=".35" stop-color="#F1E4BC"/>
+      <stop offset=".7" stop-color="#C4A964"/>
+      <stop offset="1" stop-color="#7A6226"/>
+    </linearGradient>
+    <linearGradient id="blitz" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B9E2FF"/>
+      <stop offset=".45" stop-color="#75C7FF"/>
+      <stop offset="1" stop-color="#AFA1FF"/>
+    </linearGradient>
+    <filter id="weich" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#platte)"/>
+  <rect width="512" height="512" fill="url(#aurora1)"/>
+  <rect width="512" height="512" fill="url(#aurora2)"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#B4B5FF" stroke-opacity=".16" stroke-width="3"/>
+
+  <g transform="translate(256 256) scale(.86) translate(-256 -256)">
+    <circle cx="240" cy="276" r="166" fill="url(#schatten)"/>
+    <circle cx="256" cy="256" r="149" fill="none" stroke="url(#gold)" stroke-width="11"/>
+    <circle cx="256" cy="256" r="143" fill="none" stroke="#553E0C" stroke-opacity=".55" stroke-width="2"/>
+    <circle cx="256" cy="256" r="141" fill="url(#chrom)"/>
+    <circle cx="256" cy="256" r="141" fill="none" stroke="#1A1838" stroke-width="3"/>
+    <path d="M144 318a141 141 0 0 0 122 79" fill="none" stroke="#AFA1FF" stroke-opacity=".35" stroke-width="5" stroke-linecap="round"/>
+    <path d="M286 118 L196 266 L246 266 L214 398 L312 234 L260 234 L314 118 Z" fill="#000" opacity=".45" transform="translate(-10 12)" filter="url(#weich)"/>
+    <path d="M286 118 L196 266 L246 266 L214 398 L312 234 L260 234 L314 118 Z" fill="url(#blitz)" stroke="#F1E4BC" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M292 132 L214 258" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="336" cy="190" rx="22" ry="12" transform="rotate(-35 336 190)" fill="#FFFFFF" fill-opacity=".85"/>
+  </g>
+</svg>

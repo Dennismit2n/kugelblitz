@@ -1,0 +1,5 @@
+* text=auto eol=lf
+lektion04-original.html -text
+*.woff2 binary
+*.png binary
+*.webp binary

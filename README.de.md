@@ -26,7 +26,7 @@ Ein ganzer Tisch auf einem Bildschirm: Abschussrampe mit Skill Shot, zwei Flippe
 Das Spiel zeigt die Beschriftung deiner eigenen Tastatur an. Enter zählt außerdem den Bonus sofort zu Ende.
 
 <p>
-<img src="docs/spiel-390-de.webp" width="300" alt="Kugelblitz auf dem Handy: oben 87.110 Punkte, Kugel 1 von 3 und Rang Leuchter, darunter der Tisch über die ganze Breite mit dem Band „Rang: Leuchter“, dann Knöpfe für Schubs nach links, oben und rechts und für Pause.">
+<img src="docs/spiel-390-de.webp" width="300" alt="Kugelblitz auf dem Handy: oben 97.110 Punkte, Kugel 1 von 3 und Rang Leuchter, darunter der Tisch über die ganze Breite mit dem Band „Rang: Leuchter“, dann Knöpfe für Schubs nach links, oben und rechts und für Pause.">
 <img src="docs/spiel-390-de-hc-dark.webp" width="300" alt="Kugelblitz auf dem Handy in „Hoher Kontrast dunkel“: schwarzer Grund, graue Banden, flache hellblaue und lila Lampen ohne Verlauf und Schein, weiße Umrisse um Bumper und Flipper, oben das Band „Mission 2: Leitbahnen“.">
 </p>
 

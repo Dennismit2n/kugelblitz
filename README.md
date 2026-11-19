@@ -27,7 +27,7 @@ The game shows the labels of your own keyboard. Enter also counts the bonus up a
 
 <p>
 <img src="docs/spiel-390-en.webp" width="300" alt="Kugelblitz on a phone: score 87,110, ball 1 of 3 and rank Beacon at the top, below it the table filling the screen with the banner “Rank: Beacon”, then buttons for nudging left, up and right and for pause.">
-<img src="docs/spiel-390-en-hc-dark.webp" width="300" alt="The same view in “High contrast dark”: black background, grey walls, flat light blue and lilac lamps without gradients or glow, white outlines around the bumpers and flippers.">
+<img src="docs/spiel-390-en-hc-dark.webp" width="300" alt="The same view in “High contrast dark”: black background, gray walls, flat light blue and lilac lamps without gradients or glow, white outlines around the bumpers and flippers.">
 </p>
 
 ## Rules in short
@@ -39,11 +39,11 @@ The game shows the labels of your own keyboard. Enter also counts the bonus up a
 
 ## The physics: nothing tunnels through
 
-Kugelblitz runs on its own small physics, grown from Lesson 04 of Matthias Müller’s “Ten Minute Physics”. The lesson moves every ball once per frame. A fast ball can then jump over a thin flipper between two frames and simply pass through it. That is called tunnelling, and it is the classic trap of browser pinball.
+Kugelblitz runs on its own small physics, grown from Lesson 04 of Matthias Müller’s “Ten Minute Physics”. The lesson moves every ball once per frame. A fast ball can then jump over a thin flipper between two frames and simply pass through it. That is called tunneling, and it is the classic trap of browser pinball.
 
 - **Substeps:** the physics runs at a fixed 120 ticks per second, and every tick is split so finely that no ball moves more than 40 % of its radius at once.
 - **Time account:** the game runs equally fast on 60 Hz and 144 Hz screens, and the drawing interpolates between ticks so nothing stutters.
-- **Safety net:** a speed cap, and a bounce only when the ball and the obstacle are actually moving towards each other.
+- **Safety net:** a speed cap, and a bounce only when the ball and the obstacle are actually moving toward each other.
 
 You can watch the difference. Press **T** to switch to the step size of the lesson, then **B** (with no ball in play) to fire a test salvo at the left flipper: with the lesson’s steps fast balls slip through, with substeps none do. The panel “Physics and testing” counts along. The test script does the same on a large scale: of 144 balls per speed fired at the resting flipper, the original lesson lets 29 % through at speed 5 and 60 % at speed 9, Kugelblitz none.
 
@@ -55,7 +55,7 @@ The L-Meter checks this in the browser. `index.html?licht=1` plays a script with
 
 ## Appearance, languages, app
 
-- **Visual aids:** under “Appearance” you find the same choices as in the other tools of the workshop: high contrast dark and light (flat, without gradients or glow), colour-blind (Okabe-Ito colours, outlines around lit lamps and signs on the Chamber ladder) and inverted colours. Normal always stays dark, the light versions are there only as an aid, and switching never flashes.
+- **Visual aids:** under “Appearance” you find the same choices as in the other tools of the workshop: high contrast dark and light (flat, without gradients or glow), color-blind (Okabe-Ito colors, outlines around lit lamps and signs on the Chamber ladder) and inverted colors. Normal always stays dark, the light versions are there only as an aid, and switching never flashes.
 - **14 languages:** German, English, Spanish, French, Italian, Dutch, Polish, Portuguese, Turkish, Russian, Hindi, Chinese, Japanese and Korean, detected from your browser and changeable in the settings. Some translations are machine-made, corrections are very welcome.
 - **App and offline:** after the first visit a service worker keeps Kugelblitz available without a connection. In Chrome, Edge and Samsung Internet an “Install” button appears in the settings and sets it up as an app in full screen. On an iPhone use “Add to Home Screen” in Safari. You can also download the files and double-click `index.html`; it plays without a server, only installing and offline need one.
 
@@ -72,7 +72,7 @@ Three test scripts, run one after the other with Node.js (no packages needed). E
 
 | Command | What it checks |
 |---|---|
-| `node tests/tunnel.mjs --pruefen` | Physics and tunnelling: fires balls at flippers, walls, corners, slingshots, targets and the Chamber, runs the original lesson side by side, plays the table and checks that every part is reachable and nothing gets stuck. |
+| `node tests/tunnel.mjs --pruefen` | Physics and tunneling: fires balls at flippers, walls, corners, slingshots, targets and the Chamber, runs the original lesson side by side, plays the table and checks that every part is reachable and nothing gets stuck. |
 | `node tests/regeln.mjs` | Rules and languages: scoring, missions, ranks, multiball, bonus, tilt, ball save, high scores, and that every language has every text. |
 | `node tests/spiel.mjs` | An autoplayer with a good and a weak profile plays 80 games each plus six long games and checks the balance: length of a game, share of balls lost in the outlanes, missions, multiball. |
 
@@ -84,9 +84,9 @@ Three test scripts, run one after the other with Node.js (no packages needed). E
 - `messen.mjs`: the L-Meter including the tiles around the table, and drawing times.
 - `icons.mjs`: renders the PNG icons from the SVG templates in `icons/`.
 
-## Credits and licence
+## Credits and license
 
-- The physics grew out of Lesson 04, “Pinball”, of [Ten Minute Physics](https://matthias-research.github.io/pages/tenMinutePhysics/) by Matthias Müller, under the MIT licence. His file is in the repo unchanged as `lektion04-original.html`, and his notice stays in `LICENSE` and at the top of `physik.js`.
+- The physics grew out of Lesson 04, “Pinball”, of [Ten Minute Physics](https://matthias-research.github.io/pages/tenMinutePhysics/) by Matthias Müller, under the MIT license. His file is in the repo unchanged as `lektion04-original.html`, and his notice stays in `LICENSE` and at the top of `physik.js`.
 - The font is [Fraunces](https://github.com/undercasetype/Fraunces) by The Fraunces Project Authors, under the SIL Open Font License 1.1 (`schrift/OFL.txt`).
 - The keys are inspired by the old Windows pinball “3D Pinball: Space Cadet”. No graphics, sounds or table layout from it or any other game are used; the table, the drawing and the rules are my own.
 
